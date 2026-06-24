@@ -10,6 +10,50 @@ import { db } from "./firebase";
 import { Institution } from "../types";
 import { DUMMY_INSTITUTIONS } from "./dummyData";
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: null,
+      isAnonymous: null,
+      tenantId: null,
+      providerInfo: []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 /**
  * Safely removes any undefined fields recursively so Firestore doesn't reject the write.
  */
@@ -40,8 +84,30 @@ const COLLECTION_NAME = "institutions";
  * If the collection is empty, seeds it with default dummy data and returns them.
  */
 export async function loadInstitutions(): Promise<Institution[]> {
+  let querySnapshot;
   try {
-    const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
+    querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
+  } catch (error) {
+    // If permission or connection issues happen, log using the required JSON format
+    try {
+      handleFirestoreError(error, OperationType.GET, COLLECTION_NAME);
+    } catch (loggedErr) {
+      console.error("Firestore logging finished. Attempting local fallback...", loggedErr);
+    }
+    // Fallback to offline local storage if Firebase is unreachable
+    const saved = localStorage.getItem('lkp_institutions');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error("Failed to parse fallback local storage");
+      }
+    }
+    return DUMMY_INSTITUTIONS();
+  }
+
+  try {
     let list: Institution[] = [];
     
     querySnapshot.forEach((docSnap) => {
@@ -91,18 +157,7 @@ export async function loadInstitutions(): Promise<Institution[]> {
     console.log(`Loaded ${list.length} institutions from Firestore.`);
     return list;
   } catch (error) {
-    console.error("Error loading institutions from Firestore:", error);
-    // Fallback to offline local storage if Firebase is unreachable
-    const saved = localStorage.getItem('lkp_institutions');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {
-        console.error("Failed to parse fallback local storage");
-      }
-    }
-    return DUMMY_INSTITUTIONS();
+    handleFirestoreError(error, OperationType.WRITE, COLLECTION_NAME);
   }
 }
 
@@ -110,11 +165,12 @@ export async function loadInstitutions(): Promise<Institution[]> {
  * Saves a single institution to Firestore
  */
 export async function saveInstitutionToFirestore(inst: Institution): Promise<void> {
+  const path = `${COLLECTION_NAME}/${inst.id}`;
   try {
     const docRef = doc(db, COLLECTION_NAME, inst.id);
     await setDoc(docRef, sanitizeForFirestore(inst));
   } catch (error) {
-    console.error(`Error saving institution ${inst.id} to Firestore:`, error);
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
 
@@ -122,10 +178,12 @@ export async function saveInstitutionToFirestore(inst: Institution): Promise<voi
  * Deletes a single institution from Firestore
  */
 export async function deleteInstitutionFromFirestore(id: string): Promise<void> {
+  const path = `${COLLECTION_NAME}/${id}`;
   try {
     const docRef = doc(db, COLLECTION_NAME, id);
     await deleteDoc(docRef);
   } catch (error) {
-    console.error(`Error deleting institution ${id} from Firestore:`, error);
+    handleFirestoreError(error, OperationType.DELETE, path);
   }
 }
+

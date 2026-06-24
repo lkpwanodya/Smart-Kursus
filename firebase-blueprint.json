@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Institution": {
+      "title": "Institution",
+      "description": "Represents a course institution including all structural, operational, and student management details.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the institution."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the institution."
+        },
+        "email": {
+          "type": "string",
+          "description": "Institution login email/identifier."
+        },
+        "password": {
+          "type": "string",
+          "description": "Login password for the institution."
+        },
+        "activeUntil": {
+          "type": "string",
+          "description": "Subscription expiration date."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    }
+  },
+  "firestore": {
+    "/institutions/{institutionId}": {
+      "schema": "Institution",
+      "description": "The central collection containing all course institutions registered under the multi-tenant course governance SaaS platform."
+    }
+  }
+}

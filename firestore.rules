@@ -1,8 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Reusable global validation helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 3. Institutions Collection Access Rules
     match /institutions/{institutionId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isValidId(institutionId);
     }
   }
 }
