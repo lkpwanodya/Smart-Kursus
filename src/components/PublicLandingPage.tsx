@@ -4,7 +4,7 @@ import {
   BookOpen, Calendar, Building, HelpCircle, UserCheck, 
   Layers, ShieldCheck, Heart, Award, Sparkles,
   Laptop, Users, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Briefcase, Check, GraduationCap, Info,
-  Clock
+  Clock, Link
 } from 'lucide-react';
 import { Institution, Student, Program } from '../types';
 
@@ -22,6 +22,15 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
   const [phone, setPhone] = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState(lembaga.programs[0]?.id || '');
   const [registrationSuccess, setRegistrationSuccess] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    const url = window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id);
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
   
   // Interactive FAQ state
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -166,6 +175,14 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
           >
             <ArrowLeft className="w-3 h-3" />
             <span>Kembali</span>
+          </button>
+
+          <button
+            onClick={handleCopyLink}
+            className="flex items-center gap-1 text-xs font-bold text-neutral-700 hover:text-emerald-750 bg-neutral-100/85 hover:bg-emerald-50 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer border border-neutral-200/60 shadow-4xs shrink-0"
+          >
+            <Link className={`w-3 h-3 ${copied ? 'text-emerald-600 animate-bounce' : 'text-neutral-500'}`} />
+            <span>{copied ? 'Tautan Disalin!' : 'Salin Tautan'}</span>
           </button>
           
           <div className="flex items-center gap-1.5 border-l border-neutral-250 pl-2 min-w-0">

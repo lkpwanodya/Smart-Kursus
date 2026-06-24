@@ -45,6 +45,7 @@ export default function AdminModules({
   const [showAddRoomInline, setShowAddRoomInline] = useState(false);
   
   const [snpAutoSync, setSnpAutoSync] = useState<boolean>(true);
+  const [copiedUrl, setCopiedUrl] = useState<boolean>(false);
 
   // Auto-sync SNP compliance whenever any dynamic data changes
   useEffect(() => {
@@ -3399,6 +3400,34 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                 <div className="bg-emerald-50 text-emerald-800 border border-emerald-150 px-2.5 py-1 rounded-xl text-xs font-bold font-mono w-fit">
                   Live View Sync
                 </div>
+              </div>
+
+              {/* ALAMAT WEB LEMBAGA & TOMBOL SALIN */}
+              <div className="bg-emerald-50/45 border border-emerald-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/65 px-2 py-0.5 rounded-md border border-emerald-200/50 uppercase tracking-wider">
+                    Tautan Web Lembaga Anda
+                  </span>
+                  <p className="text-xs font-bold text-neutral-800 select-all font-mono break-all mt-1">
+                    {window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id)}
+                  </p>
+                  <p className="text-[11px] text-neutral-500">
+                    Gunakan tautan khusus di atas agar pengunjung/calon siswa yang mengklik link ini langsung diarahkan masuk ke halaman profil/pendaftaran LKP Anda secara instan.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id);
+                    navigator.clipboard.writeText(url).then(() => {
+                      setCopiedUrl(true);
+                      setTimeout(() => setCopiedUrl(false), 2000);
+                    });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-3xs shrink-0 self-start sm:self-center"
+                >
+                  {copiedUrl ? '🎉 Berhasil Disalin!' : '🔗 Salin Tautan Web'}
+                </button>
               </div>
 
               {/* Sub-tabs Navigation */}

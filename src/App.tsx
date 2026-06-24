@@ -24,6 +24,12 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 
 export default function App() {
+  // Public visitor state for seeing a single institution landing website, initialized from URL
+  const [selectedPublicLkpId, setSelectedPublicLkpId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('lkp');
+  });
+
   // 1. Core database state initialized from Firestore with fallback
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +41,18 @@ export default function App() {
         const data = await loadInstitutions();
         setInstitutions(data);
         prevInstitutionsRef.current = data;
+
+        // Cocokkan query param ?lkp=id-lembaga dengan data riil dari Firestore setelah data dimuat
+        const params = new URLSearchParams(window.location.search);
+        const lkpParam = params.get('lkp');
+        if (lkpParam) {
+          const found = data.find(i => i.id.toLowerCase() === lkpParam.toLowerCase());
+          if (found) {
+            setSelectedPublicLkpId(found.id);
+          } else {
+            setSelectedPublicLkpId(null);
+          }
+        }
       } catch (e) {
         console.error("Gagal inisialisasi database:", e);
       } finally {
@@ -44,8 +62,17 @@ export default function App() {
     init();
   }, []);
 
-  // Public visitor state for seeing a single institution landing website
-  const [selectedPublicLkpId, setSelectedPublicLkpId] = useState<string | null>(null);
+  // Sync state ke URL secara real-time
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (selectedPublicLkpId) {
+      params.set('lkp', selectedPublicLkpId);
+    } else {
+      params.delete('lkp');
+    }
+    const newRelativePathQuery = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState(null, '', newRelativePathQuery);
+  }, [selectedPublicLkpId]);
 
   // 2. Auth Session states
   const [currentUser, setCurrentUser] = useState<{
