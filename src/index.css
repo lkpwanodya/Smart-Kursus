@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #fafafa;
+  color: #1a1a1a;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+}
+
+/* Print margins & hide side elements from standard browsers */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    padding: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body > *:not(#print-overlay-container) {
+    display: none !important;
+  }
+  #print-overlay-container {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    color: black !important;
+    z-index: 99999999 !important;
+  }
+}
+
+#print-overlay-container {
+  display: none;
+}
+
+/* Hide scrollbars for sliders */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}

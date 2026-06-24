@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Tata Kelola Kursus",
+  "description": "Sistem administrasi kursus multi-lembaga (SaaS) dengan fungsionalitas pengawasan superadmin, pengelolaan operasional lengkap (RAB, Jurnal, Sarpras, Jadwal, Absensi, 8 SNP Akreditasi, Raport Cetak), pendaftaran siswa online/offline, serta bantuan guru bertenaga AI (Pembuat RPP, LKS, Soal Ujian, dan Evaluasi Raport otomatis).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
