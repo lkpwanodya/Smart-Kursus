@@ -18,7 +18,7 @@ import PendaftaranSiswa from './components/PendaftaranSiswa';
 import RaportPrint from './components/RaportPrint';
 import PublicLandingPage from './components/PublicLandingPage';
 
-import { loadInstitutions } from './utils/firebaseSync';
+import { loadInstitutions, sanitizeForFirestore } from './utils/firebaseSync';
 import { db } from './utils/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
@@ -308,7 +308,7 @@ export default function App() {
 
     addedOrUpdated.forEach(async (inst) => {
       try {
-        await setDoc(doc(db, "institutions", inst.id), inst);
+        await setDoc(doc(db, "institutions", inst.id), sanitizeForFirestore(inst));
         console.log(`Saved/Updated ${inst.name} to Firestore`);
       } catch (e) {
         console.error("Gagal menyimpan ke Firestore:", e);

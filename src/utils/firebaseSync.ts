@@ -10,6 +10,29 @@ import { db } from "./firebase";
 import { Institution } from "../types";
 import { DUMMY_INSTITUTIONS } from "./dummyData";
 
+/**
+ * Safely removes any undefined fields recursively so Firestore doesn't reject the write.
+ */
+export function sanitizeForFirestore<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeForFirestore(item)) as any;
+  }
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const key of Object.keys(obj as any)) {
+      const val = (obj as any)[key];
+      if (val !== undefined) {
+        cleaned[key] = sanitizeForFirestore(val);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 const COLLECTION_NAME = "institutions";
 
 /**
@@ -19,7 +42,7 @@ const COLLECTION_NAME = "institutions";
 export async function loadInstitutions(): Promise<Institution[]> {
   try {
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
-    const list: Institution[] = [];
+    let list: Institution[] = [];
     
     querySnapshot.forEach((docSnap) => {
       list.push(docSnap.data() as Institution);
@@ -33,12 +56,36 @@ export async function loadInstitutions(): Promise<Institution[]> {
       const batch = writeBatch(db);
       defaultData.forEach((inst) => {
         const docRef = doc(db, COLLECTION_NAME, inst.id);
-        batch.set(docRef, inst);
+        batch.set(docRef, sanitizeForFirestore(inst));
       });
       await batch.commit();
       
       console.log("Seeding completed successfully.");
       return defaultData;
+    }
+
+    // Sync staffCredentials from seed if missing or empty
+    const seed = DUMMY_INSTITUTIONS();
+    let updatedNeeded = false;
+    list = list.map((inst) => {
+      const seedInst = seed.find(s => s.id === inst.id);
+      if (seedInst) {
+        if (!inst.staffCredentials || inst.staffCredentials.length === 0) {
+          inst.staffCredentials = seedInst.staffCredentials;
+          updatedNeeded = true;
+        }
+      }
+      return inst;
+    });
+
+    if (updatedNeeded) {
+      console.log("Some institutions were missing staffCredentials. Syncing back to Firestore...");
+      const batch = writeBatch(db);
+      list.forEach((inst) => {
+        const docRef = doc(db, COLLECTION_NAME, inst.id);
+        batch.set(docRef, sanitizeForFirestore(inst));
+      });
+      await batch.commit();
     }
 
     console.log(`Loaded ${list.length} institutions from Firestore.`);
@@ -65,7 +112,7 @@ export async function loadInstitutions(): Promise<Institution[]> {
 export async function saveInstitutionToFirestore(inst: Institution): Promise<void> {
   try {
     const docRef = doc(db, COLLECTION_NAME, inst.id);
-    await setDoc(docRef, inst);
+    await setDoc(docRef, sanitizeForFirestore(inst));
   } catch (error) {
     console.error(`Error saving institution ${inst.id} to Firestore:`, error);
   }
