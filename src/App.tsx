@@ -1273,13 +1273,13 @@ export default function App() {
     carouselRows.push(filteredInstitutions.slice(i, i + carouselVisibleCards));
   }
 
-  // To achieve an infinite loop, if there is more than 1 row, we append the first row at the end as a clone
-  const displayRows = carouselRows.length > 1 
-    ? [...carouselRows, carouselRows[0]] 
+  // To achieve an infinite loop showing 2 rows at once, if there are more than 2 rows, we append the first 2 rows at the end as clones
+  const displayRows = carouselRows.length > 2 
+    ? [...carouselRows, carouselRows[0], carouselRows[1]] 
     : carouselRows;
 
   useEffect(() => {
-    if (carouselRows.length <= 1 || carouselIsHovering) return;
+    if (carouselRows.length <= 2 || carouselIsHovering) return;
     
     const interval = setInterval(() => {
       setCarouselIndex((prev) => prev + 1);
@@ -1624,35 +1624,37 @@ export default function App() {
                     {/* Carousel Wrapper */}
                     <div 
                       className="relative overflow-hidden rounded-2xl p-1 bg-neutral-50/20 border border-neutral-150/40"
-                      style={{ height: "192px" }}
+                      style={{ height: carouselRows.length === 1 ? "185px" : "382px" }}
                     >
                       
                       {/* Vertical Control Arrows on Right Edge */}
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
-                        <button
-                          onClick={() => {
-                            if (carouselIndex === 0) {
-                              setCarouselIndex(carouselRows.length - 1);
-                            } else {
-                              setCarouselIndex(prev => prev - 1);
-                            }
-                          }}
-                          className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
-                          title="Atas"
-                        >
-                          <ChevronUp className="w-5 h-5 stroke-[2.5]" />
-                        </button>
+                      {carouselRows.length > 2 && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
+                          <button
+                            onClick={() => {
+                              if (carouselIndex === 0) {
+                                setCarouselIndex(carouselRows.length - 1);
+                              } else {
+                                setCarouselIndex(prev => prev - 1);
+                              }
+                            }}
+                            className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
+                            title="Atas"
+                          >
+                            <ChevronUp className="w-5 h-5 stroke-[2.5]" />
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setCarouselIndex(prev => prev + 1);
-                          }}
-                          className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
-                          title="Bawah"
-                        >
-                          <ChevronDown className="w-5 h-5 stroke-[2.5]" />
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => {
+                              setCarouselIndex(prev => prev + 1);
+                            }}
+                            className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
+                            title="Bawah"
+                          >
+                            <ChevronDown className="w-5 h-5 stroke-[2.5]" />
+                          </button>
+                        </div>
+                      )}
 
                       {/* Sliding track container */}
                       <div className="overflow-hidden h-full">
@@ -1752,7 +1754,7 @@ export default function App() {
                     </div>
 
                     {/* Pagination Dots */}
-                    {carouselRows.length > 1 && (
+                    {carouselRows.length > 2 && (
                       <div className="flex justify-center items-center gap-1.5 mt-3">
                         {carouselRows.map((_, idx) => (
                           <button
