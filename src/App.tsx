@@ -3,7 +3,7 @@ import {
   DUMMY_INSTITUTIONS, 
   INITIAL_SNP_STANDARDS 
 } from './utils/dummyData';
-import { Institution, Student, RaportCard } from './types';
+import { Institution, Student, RaportCard, Program, Facility, Teacher } from './types';
 import { 
   Sparkles, KeyRound, LogOut, CheckCircle, ShieldAlert, ShieldCheck,
   Calendar, Layers, Users, TrendingUp, HelpCircle, Database,
@@ -139,6 +139,11 @@ export default function App() {
   const [showRegPass, setShowRegPass] = useState(false);
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
+  const [regSkillField, setRegSkillField] = useState('Tata Busana');
+  const [regSkillCustom, setRegSkillCustom] = useState('');
+  const [regEnableAI, setRegEnableAI] = useState(true);
+  const [regIsGenerating, setRegIsGenerating] = useState(false);
+  const [regGenStatus, setRegGenStatus] = useState('');
 
   // 6. Superadmin and creation form states
   const [superNewLkpName, setSuperNewLkpName] = useState('');
@@ -154,11 +159,18 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   
+  // Carousel/Slider states for registered institutions
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselVisibleCards, setCarouselVisibleCards] = useState(2);
+  const [carouselIsHovering, setCarouselIsHovering] = useState(false);
+  const [disableTransition, setDisableTransition] = useState(false);
+  
   // Search state for filtering registered institutions
   const [searchQuery, setSearchQuery] = useState('');
   
   // Search state for superadmin dashboard
   const [superadminSearchQuery, setSuperadminSearchQuery] = useState('');
+  const [superadminStatusFilter, setSuperadminStatusFilter] = useState<'all' | 'active' | 'expired'>('all');
 
   // Forgot Password feature states
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -695,7 +707,7 @@ export default function App() {
   };
 
   // Handle New Course Registration (Public Tenant Signup)
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
     setRegSuccess('');
@@ -729,6 +741,100 @@ export default function App() {
     defaultExpiry.setMonth(defaultExpiry.getMonth() + 6); // free 6 months
     const expiryStr = defaultExpiry.toISOString().split('T')[0];
 
+    let aiProfile = {
+      vision: 'Menjadi Lembaga Kursus yang unggul dan bermartabat.',
+      mission: 'Mengembangkan kompetensi terbaik.',
+      programs: [] as any[],
+      facilities: [] as any[],
+      teachers: [] as any[]
+    };
+
+    if (regEnableAI) {
+      setRegIsGenerating(true);
+      setRegGenStatus('✨ Asisten AI sedang merancang kurikulum dan profil LKP Anda...');
+      try {
+        const skillSelected = regSkillField === 'Lainnya' ? regSkillCustom : regSkillField;
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task: 'lkp_generate',
+            name: regName,
+            context: skillSelected || 'Umum'
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.result) {
+            const parsed = JSON.parse(data.result);
+            if (parsed.vision) aiProfile.vision = parsed.vision;
+            if (parsed.mission) aiProfile.mission = parsed.mission;
+            if (Array.isArray(parsed.programs)) aiProfile.programs = parsed.programs;
+            if (Array.isArray(parsed.facilities)) aiProfile.facilities = parsed.facilities;
+            if (Array.isArray(parsed.teachers)) aiProfile.teachers = parsed.teachers;
+          }
+        }
+      } catch (err) {
+        console.error('Error generating AI profile:', err);
+      } finally {
+        setRegIsGenerating(false);
+      }
+    }
+
+    const mappedPrograms: Program[] = aiProfile.programs.map((p: any, idx: number) => ({
+      id: 'pr_' + Date.now() + '_' + idx,
+      name: p.name || 'Program Kursus',
+      price: 1500000,
+      regFee: 100000,
+      tuitionFee: 1200000,
+      monthlyFee: 200000,
+      duration: p.duration || '3 Bulan (120 Jam)',
+      description: p.description || 'Program keterampilan komprehensif.',
+      status: 'Aktif'
+    }));
+
+    if (mappedPrograms.length === 0) {
+      const skillSelected = regSkillField === 'Lainnya' ? regSkillCustom : regSkillField;
+      mappedPrograms.push({
+        id: 'pr_' + Date.now(),
+        name: `Kursus ${skillSelected || 'Keahlian'} Dasar`,
+        price: 1500000,
+        regFee: 100000,
+        tuitionFee: 1200000,
+        monthlyFee: 200000,
+        duration: '3 Bulan (120 Jam)',
+        description: 'Materi dasar penunjang kemandirian vokasi.',
+        status: 'Aktif'
+      });
+    }
+
+    const mappedFacilities: Facility[] = aiProfile.facilities.map((f: any, idx: number) => ({
+      id: 'fa_' + Date.now() + '_' + idx,
+      name: f.name || 'Sarana Praktikum',
+      quantity: f.count || 5,
+      condition: 'Baik',
+      location: 'Ruang Lab / Praktikum Utama'
+    }));
+
+    const mappedTeachers: Teacher[] = aiProfile.teachers.map((t: any, idx: number) => ({
+      id: 'tc_' + Date.now() + '_' + idx,
+      name: t.name || 'Instruktur AI',
+      specialty: regSkillField === 'Lainnya' ? regSkillCustom : regSkillField
+    }));
+
+    const staffCreds = aiProfile.teachers.map((t: any, idx: number) => {
+      const username = (t.name || 'instruktur').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return {
+        id: 'staff_' + Date.now() + '_' + idx,
+        name: t.name || 'Instruktur AI',
+        username: username,
+        role: 'pengajar' as const,
+        active: true,
+        password: 'sandi' + username.substring(0, 4)
+      };
+    });
+
     const newLkp: Institution = {
       id: 'lkp_' + Date.now(),
       name: regName,
@@ -736,37 +842,66 @@ export default function App() {
       password: regPassword,
       activeUntil: expiryStr,
       profile: {
-        address: 'Blm diatur',
-        phone: 'Blm diatur',
+        address: 'Jl. Pemuda No. 45, Sleman, Yogyakarta',
+        phone: '0812-3456-7890',
         email: regEmail,
-        vision: 'Menjadi Lembaga Kursus yang unggul dan bermartabat.',
-        mission: 'Mengembangkan kompetensi terbaik.'
+        vision: aiProfile.vision,
+        mission: aiProfile.mission,
+        specialty: regSkillField === 'Lainnya' ? regSkillCustom : regSkillField
       },
       structure: [
-        { id: 'st_' + Date.now(), name: 'Pimpinan Lembaga Kursus', role: 'Direktur', parentId: null }
+        { id: 'st_' + Date.now() + '_1', name: 'Pimpinan Lembaga Kursus', role: 'Direktur', parentId: null },
+        ...staffCreds.map((s, idx) => ({
+          id: 'st_' + Date.now() + '_teacher_' + idx,
+          name: s.name,
+          role: 'Instruktur Utama',
+          parentId: 'st_' + Date.now() + '_1'
+        }))
       ],
-      programs: [],
-      calendar: [],
-      teachers: [],
+      programs: mappedPrograms,
+      calendar: [
+        { id: 'cal_' + Date.now() + '_1', title: 'Orientasi Siswa Baru', date: new Date().toISOString().split('T')[0], type: 'Kegiatan' },
+        { id: 'cal_' + Date.now() + '_2', title: 'Ujian Tengah Semester', date: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0], type: 'Ujian' }
+      ],
+      teachers: mappedTeachers,
       schedule: [],
       attendance: [],
-      facilities: [],
+      facilities: mappedFacilities,
       budget: [],
       journal: [],
       vouchers: [],
       snpStandards: INITIAL_SNP_STANDARDS(),
       students: [],
-      raportCards: []
+      raportCards: [],
+      staffCredentials: [
+        {
+          id: 'staff_pimp_' + Date.now(),
+          name: 'Pimpinan ' + regName,
+          username: 'pimpinan',
+          role: 'staf_admin',
+          active: true,
+          password: 'pimpinan123'
+        },
+        ...staffCreds
+      ]
     };
 
     setInstitutions([...institutions, newLkp]);
-    setRegSuccess(`🎉 Kursus "${regName}" berhasil terdaftar! Anda diberikan masa pemakaian gratis hingga ${expiryStr}. Silakan login sekarang.`);
+    
+    let successMsg = `🎉 Kursus "${regName}" berhasil terdaftar!`;
+    if (regEnableAI && mappedPrograms.length > 0) {
+      successMsg += `\n\n✨ Asisten AI juga telah menggenerasi 3 program studi (${mappedPrograms.map(p => p.name).join(', ')}), ${mappedFacilities.length} sarana prasarana utama, dan 2 instruktur pengajar fiktif berserta kredensial login mereka secara cerdas!`;
+    }
+    successMsg += `\n\nSilakan login sekarang menggunakan email LKP Anda atau username staf Anda (misal: "pimpinan" dengan sandi "pimpinan123").`;
+    
+    setRegSuccess(successMsg);
     
     // Clear forms
     setRegName('');
     setRegEmail('');
     setRegPassword('');
     setRegConfirm('');
+    setRegSkillCustom('');
   };
 
   // Handle Forgot Password - Step 1: Verify Email
@@ -1061,7 +1196,114 @@ export default function App() {
            inst.programs.some(p => p.name.toLowerCase().includes(query));
   });
 
+  // Carousel resize & auto-scroll effect
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setCarouselVisibleCards(1);
+      } else if (window.innerWidth < 1024) {
+        setCarouselVisibleCards(2);
+      } else {
+        setCarouselVisibleCards(3);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    setCarouselIndex(0);
+  }, [searchQuery, filteredInstitutions.length]);
+
+  const getCategoryMeta = (specialty: string | undefined) => {
+    const clean = (specialty || 'Lainnya').toLowerCase();
+    if (clean.includes('busana') || clean.includes('fashion') || clean.includes('jahit')) {
+      return {
+        label: specialty || 'Tata Busana',
+        icon: '🧵',
+        bgClass: 'bg-rose-50 text-rose-800 border-rose-150',
+      };
+    }
+    if (clean.includes('otomotif') || clean.includes('mekanik') || clean.includes('motor')) {
+      return {
+        label: specialty || 'Teknik Otomotif',
+        icon: '🔧',
+        bgClass: 'bg-amber-50 text-amber-800 border-amber-150',
+      };
+    }
+    if (clean.includes('rias') || clean.includes('kecantikan') || clean.includes('mua')) {
+      return {
+        label: specialty || 'Tata Rias',
+        icon: '💄',
+        bgClass: 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-150',
+      };
+    }
+    if (clean.includes('teknologi') || clean.includes('komputer') || clean.includes('it') || clean.includes('informasi') || clean.includes('pemrograman')) {
+      return {
+        label: specialty || 'Teknologi Informasi',
+        icon: '💻',
+        bgClass: 'bg-blue-50 text-blue-800 border-blue-150',
+      };
+    }
+    if (clean.includes('kuliner') || clean.includes('boga') || clean.includes('masak')) {
+      return {
+        label: specialty || 'Seni Kuliner',
+        icon: '🍳',
+        bgClass: 'bg-orange-50 text-orange-800 border-orange-150',
+      };
+    }
+    if (clean.includes('bahasa') || clean.includes('english') || clean.includes('asing') || clean.includes('komunikasi')) {
+      return {
+        label: specialty || 'Bahasa Asing',
+        icon: '🗣️',
+        bgClass: 'bg-indigo-50 text-indigo-800 border-indigo-150',
+      };
+    }
+    return {
+      label: specialty || 'Lainnya',
+      icon: '🎓',
+      bgClass: 'bg-neutral-50 text-neutral-800 border-neutral-150',
+    };
+  };
+
+  // Chunking filteredInstitutions into rows for vertical rolling
+  const carouselRows: Institution[][] = [];
+  for (let i = 0; i < filteredInstitutions.length; i += carouselVisibleCards) {
+    carouselRows.push(filteredInstitutions.slice(i, i + carouselVisibleCards));
+  }
+
+  // To achieve an infinite loop, if there is more than 1 row, we append the first row at the end as a clone
+  const displayRows = carouselRows.length > 1 
+    ? [...carouselRows, carouselRows[0]] 
+    : carouselRows;
+
+  useEffect(() => {
+    if (carouselRows.length <= 1 || carouselIsHovering) return;
+    
+    const interval = setInterval(() => {
+      setCarouselIndex((prev) => prev + 1);
+    }, 8000);
+    
+    return () => clearInterval(interval);
+  }, [carouselRows.length, carouselIsHovering]);
+
+  useEffect(() => {
+    if (disableTransition) {
+      const raf = requestAnimationFrame(() => {
+        setDisableTransition(false);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [disableTransition]);
+
   const filteredSuperadminInstitutions = institutions.filter(inst => {
+    // Status Filter
+    const expired = isLembagaExpired(inst);
+    if (superadminStatusFilter === 'active' && expired) return false;
+    if (superadminStatusFilter === 'expired' && !expired) return false;
+
+    // Search Query Filter
     const query = superadminSearchQuery.toLowerCase().trim();
     if (!query) return true;
     
@@ -1111,25 +1353,25 @@ export default function App() {
       
       {/* 1. Header (Navbar) - Hidden when entering a specific public institution landing page */}
       {!(selectedPublicLkpId && !currentUser) && (
-        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 py-2.5 sm:py-4 px-3 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-y-2.5 md:gap-y-0 no-print shadow-xs animate-fade-in">
+        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 py-1.5 sm:py-2.5 px-3 sm:px-5 flex flex-col md:flex-row md:items-center justify-between gap-y-2 md:gap-y-0 no-print shadow-xs animate-fade-in">
           {/* Row 1: Logo & Title (left), and interactive back/login controls (right on mobile) */}
           <div className="flex items-center justify-between w-full md:w-auto gap-2 sm:gap-3 min-w-0 mr-0 md:mr-4">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="bg-emerald-600 p-2 sm:p-2.5 rounded-xl text-white flex-shrink-0 shadow-xs">
-                <Layers className="w-4 h-4 sm:w-5 h-5 text-white" />
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+              <div className="bg-emerald-600 p-1.5 sm:p-2 rounded-lg text-white flex-shrink-0 shadow-xs">
+                <Layers className="w-3.5 h-3.5 sm:w-4 h-4 text-white" />
               </div>
               
               {currentUser ? (
                 currentUser.role === 'superadmin' ? (
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                    <h1 className="font-extrabold text-xs sm:text-sm md:text-base tracking-tight text-neutral-900 font-display truncate">
+                    <h1 className="font-extrabold text-[11px] sm:text-xs md:text-sm tracking-tight text-neutral-900 font-display truncate">
                       TATA KELOLA LEMBAGA KURSUS SMART
                     </h1>
                     <span className="hidden md:inline-block text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-100/50">Superadmin</span>
                   </div>
                 ) : currentLkp ? (
                   <div className="flex flex-col min-w-0">
-                    <h1 className="font-black text-xs sm:text-sm md:text-base tracking-tight text-neutral-900 font-display uppercase truncate max-w-[120px] xs:max-w-[200px] sm:max-w-md">
+                    <h1 className="font-black text-[11px] sm:text-xs md:text-sm tracking-tight text-neutral-900 font-display uppercase truncate max-w-[120px] xs:max-w-[200px] sm:max-w-md">
                       {currentLkp.name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] sm:text-[10px] md:text-xs text-neutral-500 font-medium mt-0.5">
@@ -1140,8 +1382,8 @@ export default function App() {
                   </div>
                 ) : null
               ) : (
-                <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
-                  <h1 className="font-black text-xs sm:text-base md:text-lg tracking-tight text-neutral-900 font-display uppercase truncate">SMART KURSUS</h1>
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <h1 className="font-black text-xs sm:text-sm md:text-base tracking-tight text-neutral-900 font-display uppercase truncate">SMART KURSUS</h1>
                   <span className="hidden sm:inline-block text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-150">Portal</span>
                 </div>
               )}
@@ -1177,8 +1419,8 @@ export default function App() {
           {/* Row 2 on Mobile (spans full width), or Right Side actions on Desktop */}
           <div className="flex items-center gap-1.5 sm:gap-2 w-full md:w-auto justify-end flex-shrink-0 animate-fade-in">
             {currentUser && (
-              <div className="flex items-center gap-2 sm:gap-2.5 mr-2 border-r border-neutral-100 pr-3 sm:pr-4 py-1 text-left">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 shadow-4xs">
+              <div className="flex items-center gap-2 sm:gap-2.5 mr-2 border-r border-neutral-100 pr-3 sm:pr-4 py-0.5 text-left">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 shadow-4xs">
                   {currentUser.role === 'superadmin' ? '🔍' : (
                     currentUser.subRole === 'pimpinan' ? '👑' : 
                     currentUser.subRole === 'bendahara' ? '💰' : 
@@ -1205,7 +1447,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => setShowProfileModal(true)}
-                  className="bg-white hover:bg-neutral-50 border border-neutral-250 text-neutral-700 font-extrabold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-4xs"
+                  className="bg-white hover:bg-neutral-50 border border-neutral-250 text-neutral-700 font-extrabold text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-4xs"
                   title="Ubah Profil & Kata Sandi"
                 >
                   <User className="w-3.5 h-3.5 text-neutral-500" />
@@ -1214,7 +1456,7 @@ export default function App() {
                 
                 <button
                   onClick={handleLogout}
-                  className="bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-white" />
                   <span className="hidden sm:inline">Keluar</span>
@@ -1227,7 +1469,7 @@ export default function App() {
                   {selectedPublicLkpId && (
                     <button
                       onClick={() => setSelectedPublicLkpId(null)}
-                      className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-extrabold text-xs px-3 py-2 rounded-xl transition-all cursor-pointer border border-neutral-200 shadow-3xs flex items-center gap-1"
+                      className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-extrabold text-xs px-2.5 py-1.5 rounded-xl transition-all cursor-pointer border border-neutral-200 shadow-3xs flex items-center gap-1"
                     >
                       <span>←</span>
                       <span>Beranda</span>
@@ -1240,7 +1482,7 @@ export default function App() {
                       setShowLoginModal(true);
                       setShowRegisterModal(false);
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-750 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer flex items-center gap-1.5 focus:outline-none"
+                    className="bg-emerald-600 hover:bg-emerald-750 text-white font-bold text-xs sm:text-sm px-3 py-1.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer flex items-center gap-1.5 focus:outline-none"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
                     <span>Masuk Sistem</span>
@@ -1255,7 +1497,7 @@ export default function App() {
                     setShowRegisterModal(true);
                     setShowLoginModal(false);
                   }}
-                  className="w-full md:w-auto bg-neutral-900 hover:bg-neutral-850 text-white font-bold text-xs sm:text-sm px-4 py-2.5 md:py-2 rounded-xl border border-neutral-800 transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 shadow-3xs focus:outline-none"
+                  className="w-full md:w-auto bg-neutral-900 hover:bg-neutral-850 text-white font-bold text-xs sm:text-sm px-3 py-2 md:py-1.5 rounded-xl border border-neutral-800 transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 shadow-3xs focus:outline-none"
                 >
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Registrasi Lembaga Baru</span>
@@ -1290,20 +1532,22 @@ export default function App() {
             <div className="space-y-8 py-4 max-w-5xl mx-auto animate-fade-in">
               
               {/* Elegant header description section - more compact */}
-              <div className="bg-gradient-to-br from-emerald-600 to-teal-900 text-white rounded-2xl p-5 md:p-6 shadow-xs border border-emerald-600 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="space-y-2 text-center md:text-left z-10 max-w-3xl">
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider font-mono bg-emerald-800 text-emerald-100 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                    Penyelarasan Mutu & Tata Kelola Digital Lembaga Kursus
-                  </span>
-                  <h2 className="text-xl md:text-2xl font-black tracking-tight font-display uppercase leading-tight text-white">
+              <div className="bg-gradient-to-br from-emerald-600 to-teal-900 text-white rounded-2xl py-3 px-5 md:py-3.5 md:px-6 shadow-xs border border-emerald-600 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="space-y-1 text-center md:text-left z-10 max-w-3xl">
+                  <div className="mb-1">
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider font-mono bg-emerald-800/80 text-emerald-100 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      Penyelarasan Mutu & Tata Kelola Digital Lembaga Kursus
+                    </span>
+                  </div>
+                  <h2 className="text-base md:text-lg font-black tracking-tight font-display uppercase leading-snug text-white">
                     🏫 Selamat Datang di Smart Kursus
                   </h2>
-                  <p className="text-xs md:text-sm text-emerald-100/90 leading-relaxed font-sans max-w-3xl">
+                  <p className="text-[11px] md:text-xs text-emerald-100/95 leading-relaxed font-sans max-w-3xl">
                     Sistem informasi tata kelola digital premium terintegrasi 8 Standar Nasional Pendidikan (SNP) Akreditasi, pembukuan debit kredit terpilah, RPP asisten AI, dan pendaftaran online akademik mandiri.
                   </p>
                 </div>
-                <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 hidden md:block z-10 flex-shrink-0">
-                  <Layers className="w-8 h-8 text-emerald-100" />
+                <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 hidden md:block z-10 flex-shrink-0">
+                  <Layers className="w-6 h-6 text-emerald-100" />
                 </div>
                 
                 {/* Visual accents */}
@@ -1370,63 +1614,160 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredInstitutions.map(inst => (
-                      <div 
-                        key={inst.id} 
-                        className="bg-white border border-neutral-150 p-4.5 rounded-2xl hover:border-emerald-400 hover:shadow-2xs hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between gap-3.5 group"
-                      >
-                        <div className="space-y-3">
-                          {/* Logo and Status */}
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="w-14 h-14 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center justify-center shrink-0 overflow-hidden shadow-3xs">
-                              {inst.profile.logoUrl ? (
-                                <img 
-                                  src={inst.profile.logoUrl} 
-                                  alt="Logo" 
-                                  className="w-full h-full object-contain p-1.5"
-                                  referrerPolicy="no-referrer"
-                                />
-                              ) : (
-                                <Building className="w-7 h-7 text-emerald-600" />
-                              )}
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setCarouselIsHovering(true)}
+                    onMouseLeave={() => setCarouselIsHovering(false)}
+                  >
+                    {/* Optional hover indicator / pause notice */}
+
+                    {/* Carousel Wrapper */}
+                    <div 
+                      className="relative overflow-hidden rounded-2xl p-1 bg-neutral-50/20 border border-neutral-150/40"
+                      style={{ height: "192px" }}
+                    >
+                      
+                      {/* Vertical Control Arrows on Right Edge */}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
+                        <button
+                          onClick={() => {
+                            if (carouselIndex === 0) {
+                              setCarouselIndex(carouselRows.length - 1);
+                            } else {
+                              setCarouselIndex(prev => prev - 1);
+                            }
+                          }}
+                          className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
+                          title="Atas"
+                        >
+                          <ChevronUp className="w-5 h-5 stroke-[2.5]" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setCarouselIndex(prev => prev + 1);
+                          }}
+                          className="w-9 h-9 bg-white/95 hover:bg-emerald-50 text-neutral-800 hover:text-emerald-700 rounded-full flex items-center justify-center shadow-md transition-all border border-neutral-200 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none"
+                          title="Bawah"
+                        >
+                          <ChevronDown className="w-5 h-5 stroke-[2.5]" />
+                        </button>
+                      </div>
+
+                      {/* Sliding track container */}
+                      <div className="overflow-hidden h-full">
+                        <div 
+                          className={`flex flex-col ${disableTransition ? 'transition-none' : 'transition-transform duration-500 ease-out'}`}
+                          style={{ 
+                            transform: `translateY(-${carouselIndex * 197}px)` 
+                          }}
+                          onTransitionEnd={() => {
+                            if (carouselIndex >= carouselRows.length) {
+                              setDisableTransition(true);
+                              setCarouselIndex(0);
+                            }
+                          }}
+                        >
+                          {displayRows.map((row, rowIdx) => (
+                            <div 
+                              key={rowIdx} 
+                              className="grid gap-4 shrink-0 transition-all duration-300 h-[185px] mb-3"
+                              style={{
+                                gridTemplateColumns: `repeat(${carouselVisibleCards}, minmax(0, 1fr))`
+                              }}
+                            >
+                              {row.map(inst => (
+                                <div 
+                                  key={inst.id}
+                                  className="bg-white border border-neutral-150 p-3.5 md:p-4 rounded-2xl hover:border-emerald-400 hover:shadow-2xs hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between h-full group text-left"
+                                >
+                                  <div className="space-y-2">
+                                    {/* Logo and Status */}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="w-11 h-11 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center justify-center shrink-0 overflow-hidden shadow-3xs">
+                                        {inst.profile.logoUrl ? (
+                                          <img 
+                                            src={inst.profile.logoUrl} 
+                                            alt="Logo" 
+                                            className="w-full h-full object-contain p-1"
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        ) : (
+                                          <Building className="w-5 h-5 text-emerald-600" />
+                                        )}
+                                      </div>
+                                      <span className="text-[8px] font-extrabold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0 uppercase tracking-wider">
+                                        {inst.programs.length} Program
+                                      </span>
+                                    </div>
+
+                                    {/* Details Compact */}
+                                    <div className="space-y-0.5">
+                                      <h4 className="font-extrabold text-neutral-900 text-xs md:text-sm tracking-tight uppercase group-hover:text-emerald-700 transition-colors truncate">
+                                        {inst.name}
+                                      </h4>
+                                      {inst.profile.specialty && (
+                                        <div className="flex items-center gap-1.5 mt-0.5 mb-1">
+                                          {(() => {
+                                            const meta = getCategoryMeta(inst.profile.specialty);
+                                            return (
+                                              <span className={`inline-flex items-center gap-1 text-[9.5px] font-extrabold px-2 py-0.5 rounded-md border ${meta.bgClass}`}>
+                                                <span>{meta.icon}</span>
+                                                <span>{meta.label}</span>
+                                              </span>
+                                            );
+                                          })()}
+                                        </div>
+                                      )}
+                                      <p className="flex items-start gap-1 text-[10px] text-neutral-500 font-medium line-clamp-1">
+                                        <span className="text-neutral-400 select-none">📍</span>
+                                        <span>{inst.profile.address}</span>
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Footer (Contact and Action) */}
+                                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between gap-2 shrink-0">
+                                    <span className="flex items-center gap-1 font-mono text-[9px] text-neutral-450 font-semibold truncate max-w-[65%]">
+                                      <span className="text-neutral-400 select-none">📞</span>
+                                      <span>{inst.profile.phone}</span>
+                                    </span>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedPublicLkpId(inst.id);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                      }}
+                                      className="bg-neutral-950 hover:bg-emerald-600 active:scale-98 text-white font-black text-[9px] px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-0.5 shrink-0 animate-pulse-subtle"
+                                    >
+                                      <span>Lihat</span>
+                                      <span className="text-[8px] font-mono text-emerald-300">→</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <span className="text-[10px] font-extrabold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-lg border border-emerald-100 shrink-0 uppercase tracking-wider">
-                              {inst.programs.length} Program Kursus
-                            </span>
-                          </div>
-
-                          {/* Details Compact */}
-                          <div className="space-y-1 text-left">
-                            <h4 className="font-extrabold text-neutral-900 text-sm md:text-base tracking-tight uppercase group-hover:text-emerald-700 transition-colors truncate">
-                              {inst.name}
-                            </h4>
-                            <p className="flex items-start gap-1 text-[11px] text-neutral-500 font-medium line-clamp-1">
-                              <span className="text-neutral-400 select-none">📍</span>
-                              <span>{inst.profile.address}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Footer (Contact and Action) */}
-                        <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-1 font-mono text-[10px] text-neutral-450 font-semibold">
-                            <span className="text-neutral-400 select-none">📞</span>
-                            <span>{inst.profile.phone}</span>
-                          </span>
-                          <button
-                            onClick={() => {
-                              setSelectedPublicLkpId(inst.id);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="bg-neutral-950 hover:bg-emerald-600 active:scale-98 text-white font-black text-[10px] px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-1"
-                          >
-                            <span>Lihat</span>
-                            <span className="text-[9px] font-mono text-emerald-300">→</span>
-                          </button>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Pagination Dots */}
+                    {carouselRows.length > 1 && (
+                      <div className="flex justify-center items-center gap-1.5 mt-3">
+                        {carouselRows.map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setCarouselIndex(idx)}
+                            className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                              (carouselIndex % carouselRows.length) === idx 
+                                ? 'w-6 bg-emerald-600 shadow-3xs' 
+                                : 'w-2 bg-neutral-250 hover:bg-neutral-400'
+                            }`}
+                            title={`Halaman ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1646,11 +1987,75 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* BIDANG KETERAMPILAN & AI REGENERATION */}
+                      <div className="bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-100/80 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+                          <span className="text-xs font-bold text-emerald-800">Bidang Keterampilan & Asisten AI</span>
+                        </div>
+                        
+                        <div>
+                          <span className="text-[10px] font-bold text-neutral-600 block mb-1">Pilih Bidang Utama LKP</span>
+                          <select
+                            value={regSkillField}
+                            onChange={(e) => setRegSkillField(e.target.value)}
+                            className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-white focus:outline-emerald-600"
+                          >
+                            <option value="Tata Busana">Tata Busana / Fashion Design</option>
+                            <option value="Otomotif">Teknik Otomotif / Mekanik Motor & Mobil</option>
+                            <option value="Tata Rias Kecantikan">Tata Rias & Kecantikan / MUA</option>
+                            <option value="Teknologi Informasi">Teknologi Informasi / Komputer & Pemrograman</option>
+                            <option value="Seni Kuliner">Seni Kuliner / Tata Boga</option>
+                            <option value="Bahasa Asing">Bahasa Asing & Komunikasi</option>
+                            <option value="Lainnya">Lainnya (Tulis Kustom...)</option>
+                          </select>
+                        </div>
+
+                        {regSkillField === 'Lainnya' && (
+                          <div className="animate-fade-in">
+                            <span className="text-[10px] font-bold text-neutral-600 block mb-1">Tulis Bidang Keterampilan Kustom</span>
+                            <input
+                              type="text"
+                              required
+                              value={regSkillCustom}
+                              onChange={(e) => setRegSkillCustom(e.target.value)}
+                              placeholder="Misal: Desain Grafis Kreatif, Perhotelan"
+                              className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-white focus:outline-emerald-600"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-2 pt-1">
+                          <input
+                            type="checkbox"
+                            id="regEnableAI"
+                            checked={regEnableAI}
+                            onChange={(e) => setRegEnableAI(e.target.checked)}
+                            className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer h-3.5 w-3.5"
+                          />
+                          <label htmlFor="regEnableAI" className="text-[11px] text-neutral-600 cursor-pointer leading-tight select-none">
+                            <strong>Gunakan Agen AI untuk Merancang LKP</strong> (Otomatis membuat visi, misi, 3 program kurikulum awal, fasilitas, dan instruktur sesuai bidang keahlian)
+                          </label>
+                        </div>
+                      </div>
+
                       <button
                         type="submit"
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer mt-2"
+                        disabled={regIsGenerating}
+                        className={`w-full text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md cursor-pointer mt-2 flex items-center justify-center gap-2 ${
+                          regIsGenerating 
+                            ? 'bg-neutral-400 cursor-not-allowed' 
+                            : 'bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg'
+                        }`}
                       >
-                        Selesaikan Registrasi Baru
+                        {regIsGenerating ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>{regGenStatus || 'Sedang memproses...'}</span>
+                          </>
+                        ) : (
+                          <span>Selesaikan Registrasi Baru</span>
+                        )}
                       </button>
                     </form>
                   )}
@@ -2110,48 +2515,113 @@ export default function App() {
               
               {/* List Lembaga & Pengaturan Masa Pemakian */}
               <div className="bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
-                  <div>
-                    <h3 className="font-bold text-neutral-900 text-sm">Status & Konfigurasi Batas Akses</h3>
-                    <p className="text-[11px] text-neutral-400 mt-0.5">Kelola batas tanggal aktif lisensi dan akses operasional lembaga.</p>
-                  </div>
-                  
-                  {/* Search Bar */}
-                  <div className="relative w-full md:w-80">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
-                      <Search className="w-4 h-4" />
+                <div className="flex flex-col gap-4 border-b border-neutral-100 pb-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-neutral-900 text-sm">Status & Konfigurasi Batas Akses</h3>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">Kelola batas tanggal aktif lisensi dan akses operasional lembaga.</p>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Cari nama, email, NPSN, program..."
-                      value={superadminSearchQuery}
-                      onChange={(e) => setSuperadminSearchQuery(e.target.value)}
-                      className="w-full text-xs pl-10 pr-9 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 border border-neutral-250 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white shadow-3xs transition-all"
-                    />
-                    {superadminSearchQuery && (
-                      <button
-                        onClick={() => setSuperadminSearchQuery('')}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    
+                    {/* Search Bar */}
+                    <div className="relative w-full md:w-80">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+                        <Search className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Cari nama, email, NPSN, program..."
+                        value={superadminSearchQuery}
+                        onChange={(e) => setSuperadminSearchQuery(e.target.value)}
+                        className="w-full text-xs pl-10 pr-9 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 border border-neutral-250 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white shadow-3xs transition-all"
+                      />
+                      {superadminSearchQuery && (
+                        <button
+                          onClick={() => setSuperadminSearchQuery('')}
+                          className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      onClick={() => setSuperadminStatusFilter('all')}
+                      className={`text-[11px] px-3.5 py-1.5 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-2 ${
+                        superadminStatusFilter === 'all'
+                          ? 'bg-neutral-900 text-white border-neutral-900 shadow-3xs'
+                          : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100'
+                      }`}
+                    >
+                      <span>Semua LKP</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                        superadminStatusFilter === 'all' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                      }`}>
+                        {institutions.length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setSuperadminStatusFilter('active')}
+                      className={`text-[11px] px-3.5 py-1.5 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-2 ${
+                        superadminStatusFilter === 'active'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-3xs'
+                          : 'bg-emerald-50/50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50'
+                      }`}
+                    >
+                      <span>LKP Aktif</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                        superadminStatusFilter === 'active' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {institutions.filter(inst => !isLembagaExpired(inst)).length}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setSuperadminStatusFilter('expired')}
+                      className={`text-[11px] px-3.5 py-1.5 rounded-full font-bold border transition-all cursor-pointer flex items-center gap-2 ${
+                        superadminStatusFilter === 'expired'
+                          ? 'bg-red-600 text-white border-red-600 shadow-3xs'
+                          : 'bg-red-50/50 text-red-750 border-red-100 hover:bg-red-100/50'
+                      }`}
+                    >
+                      <span>Masa Habis</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                        superadminStatusFilter === 'expired' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {institutions.filter(inst => isLembagaExpired(inst)).length}
+                      </span>
+                    </button>
                   </div>
                 </div>
                 
                 <div className="space-y-3">
                   {filteredSuperadminInstitutions.length === 0 ? (
-                    <div className="p-8 border border-dashed border-neutral-200 rounded-2xl text-center space-y-2 bg-neutral-50/20">
-                      <p className="text-sm font-bold text-neutral-700">Tidak ada lembaga kursus yang cocok</p>
-                      <p className="text-xs text-neutral-400">Silakan ubah kata kunci pencarian Anda.</p>
-                      {superadminSearchQuery && (
-                        <button
-                          onClick={() => setSuperadminSearchQuery('')}
-                          className="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 underline cursor-pointer"
-                        >
-                          Reset Pencarian
-                        </button>
-                      )}
+                    <div className="p-10 border border-dashed border-neutral-200 rounded-2xl text-center space-y-3 bg-neutral-50/20 max-w-md mx-auto my-4 animate-fade-in">
+                      <div className="mx-auto w-12 h-12 bg-neutral-100 rounded-xl flex items-center justify-center text-neutral-450">
+                        <Search className="w-5 h-5 text-neutral-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-neutral-800">Tidak ada lembaga kursus yang cocok</p>
+                        <p className="text-xs text-neutral-400">
+                          {superadminSearchQuery && superadminStatusFilter !== 'all'
+                            ? `Pencarian "${superadminSearchQuery}" dengan filter status "${superadminStatusFilter === 'active' ? 'LKP Aktif' : 'Masa Habis'}" tidak membuahkan hasil.`
+                            : superadminSearchQuery
+                            ? `Pencarian untuk "${superadminSearchQuery}" tidak ditemukan.`
+                            : `Tidak ada lembaga dengan status "${superadminStatusFilter === 'active' ? 'LKP Aktif' : 'Masa Habis'}" saat ini.`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSuperadminSearchQuery('');
+                          setSuperadminStatusFilter('all');
+                        }}
+                        className="mt-2 text-xs font-bold bg-neutral-950 hover:bg-neutral-800 text-white px-4 py-2 rounded-xl transition-all cursor-pointer shadow-3xs inline-flex items-center gap-1.5"
+                      >
+                        Reset Pencarian & Filter
+                      </button>
                     </div>
                   ) : (
                     filteredSuperadminInstitutions.map(inst => {

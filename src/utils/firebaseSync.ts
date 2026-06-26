@@ -130,14 +130,22 @@ export async function loadInstitutions(): Promise<Institution[]> {
       return defaultData;
     }
 
-    // Sync staffCredentials from seed if missing or empty
+    // Sync staffCredentials and specialty from seed if missing or empty
     const seed = DUMMY_INSTITUTIONS();
     let updatedNeeded = false;
     list = list.map((inst) => {
       const seedInst = seed.find(s => s.id === inst.id);
       if (seedInst) {
+        let changed = false;
         if (!inst.staffCredentials || inst.staffCredentials.length === 0) {
           inst.staffCredentials = seedInst.staffCredentials;
+          changed = true;
+        }
+        if (!inst.profile.specialty && seedInst.profile.specialty) {
+          inst.profile.specialty = seedInst.profile.specialty;
+          changed = true;
+        }
+        if (changed) {
           updatedNeeded = true;
         }
       }

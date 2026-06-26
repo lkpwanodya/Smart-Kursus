@@ -16,6 +16,7 @@ export interface Profile {
   email: string;
   vision: string;
   mission: string;
+  specialty?: string;
   mapQuery?: string;
   logoUrl?: string;
   bannerUrl?: string;

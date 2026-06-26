@@ -90,7 +90,8 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       phone: '022-4217890',
       email: 'tech@lkp.id',
       vision: 'Menjadi pusat pelatihan teknologi informasi terdepan dan mencetak profesional IT yang kompeten, kreatif, serta siap kerja.',
-      mission: '1. Menyelenggarakan kursus pemrograman modern yang sesuai kebutuhan industri.\n2. Menyediakan sarana praktek berteknologi mutakhir.\n3. Mengembangkan kerjasama dengan berbagai perusahaan nasional untuk penyerapan lulusan.'
+      mission: '1. Menyelenggarakan kursus pemrograman modern yang sesuai kebutuhan industri.\n2. Menyediakan sarana praktek berteknologi mutakhir.\n3. Mengembangkan kerjasama dengan berbagai perusahaan nasional untuk penyerapan lulusan.',
+      specialty: 'Teknologi Informasi'
     },
     students: [
       { id: 's1', name: 'Rian Syah', nik: '3273012903020005', email: 'rian@gmail.com', phone: '08123456789', programId: 'p1', registrationType: 'Offline', joinDate: '2026-01-10', status: 'Aktif' },
@@ -200,7 +201,8 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       phone: '0274-567890',
       email: 'english@lkp.id',
       vision: 'Menembus batas dunia dengan kemampuan bahasa global yang mumpuni, komunikatif, dan berlisensi standar internasional.',
-      mission: '1. Menyajikan metode penguasaan bahasa lisan praktis, menyenangkan, dan relevan.\n2. Memberikan pendampingan intensif untuk ujian IELTS & TOEFL.\n3. Menyediakan atmosfer belajar full English environment harian.'
+      mission: '1. Menyajikan metode penguasaan bahasa lisan praktis, menyenangkan, dan relevan.\n2. Memberikan pendampingan intensif untuk ujian IELTS & TOEFL.\n3. Menyediakan atmosfer belajar full English environment harian.',
+      specialty: 'Bahasa Asing'
     },
     students: [
       { id: 'se1', name: 'Dina Mariana', nik: '3404011202020003', email: 'dina@gmail.com', phone: '08112233445', programId: 'pe1', registrationType: 'Online', joinDate: '2026-03-01', status: 'Aktif' },
@@ -257,7 +259,8 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       phone: '031-5321456',
       email: 'cantika@lkp.id',
       vision: 'Mewujudkan wirausaha muda tata busana dan desainer terkemuka tingkat nasional yang memiliki jiwa kemandirian seni.',
-      mission: '1. Memberikan kompetensi teknik jahit berkualitas tinggi, presisi, dan indah.\n2. Melatih pemahaman pola baju klasik dan modern.\n3. Melahirkan kompetensi bisnis fesyen mandiri bagi alumni.'
+      mission: '1. Memberikan kompetensi teknik jahit berkualitas tinggi, presisi, dan indah.\n2. Melatih pemahaman pola baju klasik dan modern.\n3. Melahirkan kompetensi bisnis fesyen mandiri bagi alumni.',
+      specialty: 'Tata Busana'
     },
     students: [
       { id: 'sb1', name: 'Wulan Sari', nik: '3578014502010007', email: 'wulan@gmail.com', phone: '08119922883', programId: 'pb1', registrationType: 'Offline', joinDate: '2026-04-10', status: 'Aktif' }

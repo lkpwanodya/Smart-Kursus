@@ -322,6 +322,93 @@ Pimpinan ${lkpName},
 
 ${pimpName}
 ${pimpRole}`;
+    } else if (task === 'lkp_generate') {
+      const field = (context || '').toLowerCase();
+      let genData = {
+        vision: '',
+        mission: '',
+        programs: [] as any[],
+        facilities: [] as any[],
+        teachers: [] as any[]
+      };
+
+      if (field.includes('busana') || field.includes('fashion') || field.includes('jahit')) {
+        genData = {
+          vision: "Menjadi pusat pelatihan tata busana terkemuka yang menghasilkan desainer dan penjahit profesional siap kerja.",
+          mission: "1. Menyelenggarakan pelatihan tata busana yang berbasis standar industri.\n2. Membekali peserta dengan jiwa kewirausahaan fashion kreatif.\n3. Menjalin kemitraan dengan industri kreatif dan konveksi skala nasional.",
+          programs: [
+            { name: "Menjahit Busana Dasar", code: "FASH-01", description: "Mempelajari teknik menjahit dasar, pengenalan mesin jahit, dan pembuatan pola sederhana.", duration: "3 Bulan (120 Jam)" },
+            { name: "Pola Busana Modern", code: "FASH-02", description: "Mengembangkan keahlian membuat pola pakaian wanita, pria, dan anak-anak sesuai tren terkini.", duration: "2 Bulan (80 Jam)" },
+            { name: "Fashion Desain & Kreatif", code: "FASH-03", description: "Pelatihan mendesain ilustrasi busana, pemilihan bahan tekstil, dan perencanaan koleksi fashion.", duration: "3 Bulan (120 Jam)" }
+          ],
+          facilities: [
+            { name: "Mesin Jahit Portable Brother", count: 10, condition: "Baik" },
+            { name: "Meja Potong Pola Kayu Solid", count: 3, condition: "Baik" },
+            { name: "Setrika Uap Industri Philips", count: 2, condition: "Baik" },
+            { name: "Manekin Pas Tubuh S/M/L", count: 6, condition: "Baik" }
+          ],
+          teachers: [
+            { name: "Ibu Fitri Handayani, S.Pd", email: "fitri.handayani@lkp-fashion.com", phone: "0812-1122-3344" },
+            { name: "Bapak Junaidi, M.Ds", email: "junaidi.design@lkp-fashion.com", phone: "0813-5566-7788" }
+          ]
+        };
+      } else if (field.includes('otomotif') || field.includes('motor') || field.includes('mobil') || field.includes('kendaraan')) {
+        genData = {
+          vision: "Menjadi lembaga kursus otomotif unggulan yang mencetak mekanik andal, profesional, dan berjiwa technopreneur.",
+          mission: "1. Mengajarkan teknik perawatan dan perbaikan mesin otomotif modern.\n2. Mengembangkan metode praktek berbasis standar bengkel resmi.\n3. Menyalurkan lulusan langsung ke jaringan bengkel kemitraan.",
+          programs: [
+            { name: "Teknik Sepeda Motor Mandiri", code: "OTO-SM", description: "Pemahaman mesin 2-tak dan 4-tak, kelistrikan, karburator, dan sistem injeksi motor modern.", duration: "3 Bulan (120 Jam)" },
+            { name: "Mekanik Mobil Komprehensif", code: "OTO-MB", description: "Perawatan mesin mobil bensin/diesel, sistem rem, transmisi manual/otomatis, dan AC mobil.", duration: "4 Bulan (160 Jam)" }
+          ],
+          facilities: [
+            { name: "Bike Lift & Toolkit Set Lengkap", count: 6, condition: "Baik" },
+            { name: "Alat Scan Diagnostik EFI", count: 2, condition: "Baik" },
+            { name: "Mesin Bongkar Pasang Ban", count: 1, condition: "Baik" }
+          ],
+          teachers: [
+            { name: "Bapak Haryanto, S.T.", email: "haryanto@lkp-otomotif.id", phone: "0856-7890-1234" },
+            { name: "Bapak Rudi Hartono", email: "rudi.mekanik@lkp-otomotif.id", phone: "0812-4455-6677" }
+          ]
+        };
+      } else if (field.includes('rias') || field.includes('kecantikan') || field.includes('beauty') || field.includes('makeup')) {
+        genData = {
+          vision: "Menghasilkan ahli kecantikan dan penata rias profesional yang mandiri, kreatif, dan berdaya saing tinggi di industri estetika.",
+          mission: "1. Memberikan pelatihan seni rias wajah (makeup) dan perawatan kulit berstandar nasional.\n2. Melatih keterampilan komunikasi dan etika pelayanan jasa kecantikan.\n3. Mendorong kemandirian berwirausaha salon kecantikan.",
+          programs: [
+            { name: "Tata Rias Pengantin Tradisional", code: "BEAU-01", description: "Seni merias wajah dan sanggul pengantin adat Nusantara dengan pakem adat resmi.", duration: "2 Bulan (80 Jam)" },
+            { name: "Professional Makeup Artist (MUA)", code: "BEAU-02", description: "Teknik makeup modern, pesta, wisuda, bridal, karakter, dan foto studio komersial.", duration: "3 Bulan (120 Jam)" }
+          ],
+          facilities: [
+            { name: "Meja Rias LED & Kursi Hidrolik", count: 8, condition: "Baik" },
+            { name: "Set Alat Kosmetik Professional", count: 10, condition: "Baik" },
+            { name: "Alat Facial Treatment Vaporizer", count: 3, condition: "Baik" }
+          ],
+          teachers: [
+            { name: "Ibu Amalia Siregar", email: "amalia.mua@lkp-beauty.com", phone: "0819-3344-5566" },
+            { name: "Ibu Dewi Lestari, S.Pd", email: "dewi.lestari@lkp-beauty.com", phone: "0877-1122-9900" }
+          ]
+        };
+      } else {
+        genData = {
+          vision: `Menjadi Lembaga Kursus bidang ${context || 'Keahlian'} terdepan yang menghasilkan lulusan unggul, kompeten, dan siap bersaing di pasar kerja.`,
+          mission: `1. Menyelenggarakan pelatihan sistematis dan adaptif terhadap perkembangan teknologi.\n2. Menyediakan fasilitas praktek modern dan instruktur yang berpengalaman.\n3. Menjalin kerjasama penyerapan lulusan dengan dunia usaha dan industri.`,
+          programs: [
+            { name: `Kursus ${context || 'Keahlian'} Tingkat Dasar`, code: "LKP-01", description: `Pengenalan dasar-dasar bidang ${context || 'Keahlian'} dari dasar hingga fungsional kerja.`, duration: "3 Bulan (120 Jam)" },
+            { name: `Kursus ${context || 'Keahlian'} Tingkat Lanjut`, code: "LKP-02", description: `Spesialisasi dan pendalaman teknik tingkat mahir pada bidang ${context || 'Keahlian'} untuk profesional kerja.`, duration: "2 Bulan (80 Jam)" }
+          ],
+          facilities: [
+            { name: "Ruang Kelas AC & Proyektor Multimedia", count: 3, condition: "Baik" },
+            { name: "Perangkat Kerja / Komputer Utama", count: 15, condition: "Baik" },
+            { name: "Modul Pembelajaran & Cetakan SOP", count: 20, condition: "Baik" }
+          ],
+          teachers: [
+            { name: "Bapak Syarifuddin, M.T.", email: "syarif@lkp-utama.sch.id", phone: "0812-9900-1122" },
+            { name: "Ibu Wahyu Ningsih, S.Kom", email: "wahyu@lkp-utama.sch.id", phone: "0811-2233-4455" }
+          ]
+        };
+      }
+
+      mockResult = JSON.stringify(genData);
     }
 
     // Delay slightly to simulate AI API Call latencies
@@ -387,6 +474,10 @@ Format output harus berupa objek JSON dengan kunci "rights" (hak/kewenangan seca
     } else if (task === 'sk') {
       prompt = context;
       systemInstruction = 'Anda adalah staf legalitas dan konsultan hukum organisasi nonformal khusus Lembaga Kursus dan Pelatihan (LKP). Buatlah draf Surat Keputusan (SK) formal yang sah, ringkas, padat, langsung ke intinya (tidak bertele-tele), rapi, menggunakan format kop surat dan tanda tangan yang sesuai profil lembaga.';
+    } else if (task === 'lkp_generate') {
+      prompt = `Buatlah draf data profil awal, visi misi, program kursus unggulan, serta sarana prasarana praktek yang realistis untuk pendaftaran baru Lembaga Kursus dan Pelatihan (LKP) bernama "${name}" yang bergerak di bidang keterampilan/vokasi: "${context}".
+Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
+      systemInstruction = 'Anda adalah konsultan pendidikan vokasi SaaS di Indonesia. Bantu pendaftar membuat profil LKP baru berdasarkan bidang keterampilan vokasional yang mereka pilih agar siap diakreditasi dengan 8 SNP.';
     }
 
     const response = await ai.models.generateContent({
@@ -395,7 +486,7 @@ Format output harus berupa objek JSON dengan kunci "rights" (hak/kewenangan seca
       config: {
         systemInstruction,
         temperature: 0.7,
-        responseMimeType: (task === 'faq' || task === 'rights_duties' || task === 'paket_lengkap') ? 'application/json' : undefined,
+        responseMimeType: (task === 'faq' || task === 'rights_duties' || task === 'paket_lengkap' || task === 'lkp_generate') ? 'application/json' : undefined,
         responseSchema: task === 'faq' ? {
           type: Type.ARRAY,
           items: {
@@ -423,6 +514,53 @@ Format output harus berupa objek JSON dengan kunci "rights" (hak/kewenangan seca
             cara_penilaian: { type: Type.STRING, description: 'Panduan & Cara Penilaian dalam format Markdown Indonesia' }
           },
           required: ['rpp', 'lks', 'uji_teori', 'uji_praktek', 'cara_penilaian']
+        } : task === 'lkp_generate' ? {
+          type: Type.OBJECT,
+          properties: {
+            vision: { type: Type.STRING, description: 'Visi lembaga kursus yang inspiratif dan berfokus pada keahlian vokasional tersebut' },
+            mission: { type: Type.STRING, description: 'Misi lembaga kursus dalam bentuk kalimat/poin yang dipisahkan oleh baris baru (bukan array, melainkan string dengan newline)' },
+            programs: {
+              type: Type.ARRAY,
+              description: 'Daftar 3 program kursus yang sangat relevan dengan bidang keahlian tersebut',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'Nama program kursus, contoh: "Keahlian Menjahit Dasar", "Pola Busana Wanita"' },
+                  code: { type: Type.STRING, description: 'Kode program singkat fiktif, contoh: "FASH-01", "AUTO-A"' },
+                  description: { type: Type.STRING, description: 'Deskripsi singkat program kursus' },
+                  duration: { type: Type.STRING, description: 'Durasi pembelajaran, contoh: "3 bulan (120 Jam)", "1 bulan (40 Jam)"' }
+                },
+                required: ['name', 'code', 'description', 'duration']
+              }
+            },
+            facilities: {
+              type: Type.ARRAY,
+              description: 'Daftar 3-4 sarana dan prasarana / peralatan praktek esensial untuk bidang keahlian tersebut',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'Nama fasilitas/perkakas, contoh: "Mesin Jahit Portable", "Kunci Ring Set"' },
+                  count: { type: Type.INTEGER, description: 'Jumlah unit fiktif yang realistis, contoh: 5, 10, 15' },
+                  condition: { type: Type.STRING, description: 'Kondisi, harus bernilai: "Baik"' }
+                },
+                required: ['name', 'count', 'condition']
+              }
+            },
+            teachers: {
+              type: Type.ARRAY,
+              description: 'Daftar 2 instruktur pengajar fiktif dengan nama yang terdengar lokal dan profesional',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'Nama instruktur, contoh: "Siti Rahmawati, S.Pd", "Budi Hermawan"' },
+                  email: { type: Type.STRING, description: 'Alamat email fiktif, contoh: "siti.rahma@lkp.id"' },
+                  phone: { type: Type.STRING, description: 'Nomor telepon fiktif, contoh: "0812-9876-5432"' }
+                },
+                required: ['name', 'email', 'phone']
+              }
+            }
+          },
+          required: ['vision', 'mission', 'programs', 'facilities', 'teachers']
         } : undefined
       }
     });
