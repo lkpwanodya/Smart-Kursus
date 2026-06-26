@@ -6,8 +6,8 @@ import {
 import { Institution, Student, RaportCard } from './types';
 import { 
   Sparkles, KeyRound, LogOut, CheckCircle, ShieldAlert, ShieldCheck,
-  Calendar, Layers, Users, TrendingUp, HelpCircle, 
-  BookOpen, Plus, Trash2, Eye, EyeOff, CalendarRange, Clock, Lock, X,
+  Calendar, Layers, Users, TrendingUp, HelpCircle, Database,
+  BookOpen, Plus, Trash2, Eye, EyeOff, CalendarRange, Clock, Lock, X, User, Search,
   Building, FolderKanban, ClipboardCheck, MapPin, Landmark, Percent, 
   FileSpreadsheet, Download, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, FileText, BrainCircuit
 } from 'lucide-react';
@@ -73,6 +73,19 @@ export default function App() {
     const newRelativePathQuery = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
     window.history.replaceState(null, '', newRelativePathQuery);
   }, [selectedPublicLkpId]);
+
+  // Firebase database storage capacity state for superadmin (default simulation limit is 100 KB)
+  const [storageLimitKb, setStorageLimitKb] = useState<number>(100);
+
+  // Estimasi ukuran database berdasarkan kompresi JSON + metadata overhead
+  const dbSizeBytes = institutions.reduce((sum, inst) => {
+    return sum + JSON.stringify(inst).length + 150;
+  }, 0);
+  const dbSizeKb = Number((dbSizeBytes / 1024).toFixed(2));
+  const storageLimitBytes = storageLimitKb * 1024;
+  const usagePercentage = Math.min(100, Number(((dbSizeBytes / storageLimitBytes) * 100).toFixed(1)));
+  const remainingPercentage = Number((100 - usagePercentage).toFixed(1));
+  const isLowCapacity = remainingPercentage < 10;
 
   // 2. Auth Session states
   const [currentUser, setCurrentUser] = useState<{
@@ -143,6 +156,9 @@ export default function App() {
   
   // Search state for filtering registered institutions
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Search state for superadmin dashboard
+  const [superadminSearchQuery, setSuperadminSearchQuery] = useState('');
 
   // Forgot Password feature states
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -154,6 +170,224 @@ export default function App() {
   const [forgotNewPassConfirm, setForgotNewPassConfirm] = useState('');
   const [forgotError, setForgotError] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState('');
+
+  // States for Editing Own Profile & Password
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileOldPassword, setProfileOldPassword] = useState('');
+  const [profilePassword, setProfilePassword] = useState('');
+  const [profileConfirmPassword, setProfileConfirmPassword] = useState('');
+  const [profileShowOldPass, setProfileShowOldPass] = useState(false);
+  const [profileShowNewPass, setProfileShowNewPass] = useState(false);
+  const [profileShowConfirmPass, setProfileShowConfirmPass] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+
+  // Synchronize profile form states when modal opens
+  useEffect(() => {
+    if (showProfileModal && currentUser) {
+      const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
+      if (currentUser.role === 'superadmin') {
+        setProfileName('Superadmin');
+        setProfileEmail(currentUser.staffUsername || 'superadmin');
+      } else if (currentUser.subRole === 'pimpinan' && activeLkp) {
+        setProfileName(activeLkp.name);
+        setProfileEmail(activeLkp.email);
+      } else if (activeLkp) {
+        const staff = activeLkp.staffCredentials?.find(
+          s => s.role === currentUser.subRole && s.username.toLowerCase() === currentUser.staffUsername?.toLowerCase()
+        );
+        if (staff) {
+          setProfileName(staff.name);
+          setProfileEmail(staff.username);
+        } else {
+          setProfileName(currentUser.staffName || '');
+          setProfileEmail(currentUser.staffUsername || '');
+        }
+      }
+      setProfileOldPassword('');
+      setProfilePassword('');
+      setProfileConfirmPassword('');
+      setProfileShowOldPass(false);
+      setProfileShowNewPass(false);
+      setProfileShowConfirmPass(false);
+      setProfileError('');
+      setProfileSuccess('');
+    }
+  }, [showProfileModal, currentUser, institutions]);
+
+  const handleSaveProfileChanges = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+
+    // Validate double entry for new password
+    if (profilePassword || profileConfirmPassword) {
+      if (!profilePassword || !profileConfirmPassword) {
+        setProfileError('⚠️ Kedua kolom kata sandi baru wajib diisi (Kata Sandi Baru & Konfirmasi Kata Sandi Baru)!');
+        return;
+      }
+    }
+
+    // Verify old password if profilePassword is being changed
+    if (profilePassword) {
+      if (!profileOldPassword) {
+        setProfileError('⚠️ Silakan masukkan kata sandi lama Anda terlebih dahulu!');
+        return;
+      }
+
+      if (currentUser?.role === 'superadmin') {
+        if (profileOldPassword !== 'superadmin123') {
+          setProfileError('⚠️ Kata sandi lama Superadmin salah!');
+          return;
+        }
+      } else {
+        const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
+        if (!activeLkp) {
+          setProfileError('⚠️ Gagal menemukan data lembaga!');
+          return;
+        }
+
+        if (currentUser?.subRole === 'pimpinan') {
+          if (profileOldPassword !== activeLkp.password) {
+            setProfileError('⚠️ Kata sandi lama Pimpinan salah!');
+            return;
+          }
+        } else {
+          const staffList = activeLkp.staffCredentials || [];
+          const targetStaff = staffList.find(
+            s => s.role === currentUser?.subRole && s.username.toLowerCase() === currentUser?.staffUsername?.toLowerCase()
+          );
+          if (!targetStaff || profileOldPassword !== targetStaff.password) {
+            setProfileError('⚠️ Kata sandi lama Staff salah!');
+            return;
+          }
+        }
+      }
+    }
+
+    if (profilePassword && profilePassword.length < 6) {
+      setProfileError('⚠️ Kata sandi baru minimal harus 6 karakter!');
+      return;
+    }
+
+    if (profilePassword !== profileConfirmPassword) {
+      setProfileError('⚠️ Konfirmasi kata sandi baru tidak cocok!');
+      return;
+    }
+
+    if (currentUser?.role === 'superadmin') {
+      setProfileSuccess('🎉 Profil Superadmin berhasil diperbarui!');
+      setCurrentUser({
+        ...currentUser,
+        staffName: profileName || 'Superadmin',
+        staffUsername: profileEmail || 'superadmin'
+      });
+      localStorage.setItem('user_session', JSON.stringify({
+        ...currentUser,
+        staffName: profileName || 'Superadmin',
+        staffUsername: profileEmail || 'superadmin'
+      }));
+      return;
+    }
+
+    const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
+    if (!activeLkp) {
+      setProfileError('⚠️ Gagal menemukan data lembaga!');
+      return;
+    }
+
+    if (currentUser?.subRole === 'pimpinan') {
+      const emailLower = profileEmail.toLowerCase();
+      const isEmailTaken = institutions.some(
+        inst => inst.id !== activeLkp.id && inst.email.toLowerCase() === emailLower
+      );
+      if (isEmailTaken || emailLower === 'superadmin') {
+        setProfileError('⚠️ Email sudah digunakan oleh lembaga lain atau dilindungi!');
+        return;
+      }
+
+      const updatedLkp: Institution = {
+        ...activeLkp,
+        name: profileName,
+        email: emailLower,
+      };
+      if (profilePassword) {
+        updatedLkp.password = profilePassword;
+      }
+
+      updateCurrentLkp(updatedLkp);
+      
+      setCurrentUser({
+        ...currentUser,
+        staffName: profileName,
+        staffUsername: emailLower
+      });
+
+      setProfileSuccess('🎉 Profil & Password Lembaga berhasil diperbarui!');
+      setProfilePassword('');
+      setProfileConfirmPassword('');
+    } else {
+      const staffList = activeLkp.staffCredentials || [];
+      const staffMemberIndex = staffList.findIndex(
+        s => s.role === currentUser?.subRole && s.username.toLowerCase() === currentUser?.staffUsername?.toLowerCase()
+      );
+
+      if (staffMemberIndex === -1) {
+        setProfileError('⚠️ Akun staff tidak ditemukan!');
+        return;
+      }
+
+      const userLower = profileEmail.toLowerCase();
+      const isUsernameTakenByLkp = institutions.some(
+        inst => inst.email.toLowerCase() === userLower
+      );
+      let isUsernameTakenByStaff = false;
+      for (const inst of institutions) {
+        if (inst.staffCredentials) {
+          const found = inst.staffCredentials.find(
+            s => s.username.toLowerCase() === userLower && (inst.id !== activeLkp.id || s.role !== currentUser?.subRole)
+          );
+          if (found) {
+            isUsernameTakenByStaff = true;
+            break;
+          }
+        }
+      }
+
+      if (isUsernameTakenByLkp || isUsernameTakenByStaff || userLower === 'superadmin') {
+        setProfileError('⚠️ Nama pengguna / email sudah digunakan!');
+        return;
+      }
+
+      const updatedStaffList = [...staffList];
+      const targetStaff = updatedStaffList[staffMemberIndex];
+      updatedStaffList[staffMemberIndex] = {
+        ...targetStaff,
+        name: profileName,
+        username: userLower,
+      };
+      if (profilePassword) {
+        updatedStaffList[staffMemberIndex].password = profilePassword;
+      }
+
+      updateCurrentLkp({
+        ...activeLkp,
+        staffCredentials: updatedStaffList
+      });
+
+      setCurrentUser({
+        ...currentUser,
+        staffName: profileName,
+        staffUsername: userLower
+      });
+
+      setProfileSuccess('🎉 Profil & Password Staff berhasil diperbarui!');
+      setProfilePassword('');
+      setProfileConfirmPassword('');
+    }
+  };
 
   // Global custom alert modal states (to work around iframe alert blocks)
   const [globalAlert, setGlobalAlert] = useState<{ message: string; type: 'info' | 'success' | 'warning' } | null>(null);
@@ -827,6 +1061,20 @@ export default function App() {
            inst.programs.some(p => p.name.toLowerCase().includes(query));
   });
 
+  const filteredSuperadminInstitutions = institutions.filter(inst => {
+    const query = superadminSearchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    const nameMatch = inst.name?.toLowerCase().includes(query) || false;
+    const emailMatch = inst.email?.toLowerCase().includes(query) || false;
+    const idMatch = inst.id?.toLowerCase().includes(query) || false;
+    const npsnMatch = inst.profile?.npsn?.toLowerCase().includes(query) || false;
+    const addressMatch = inst.profile?.address?.toLowerCase().includes(query) || false;
+    const programMatch = inst.programs?.some(p => p.name?.toLowerCase().includes(query)) || false;
+    
+    return nameMatch || emailMatch || idMatch || npsnMatch || addressMatch || programMatch;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafa] flex flex-col items-center justify-center p-6 select-none animate-fade-in">
@@ -954,13 +1202,24 @@ export default function App() {
             )}
 
             {currentUser ? (
-              <button
-                onClick={handleLogout}
-                className="bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5 text-white" />
-                <span className="hidden sm:inline">Keluar</span>
-              </button>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  onClick={() => setShowProfileModal(true)}
+                  className="bg-white hover:bg-neutral-50 border border-neutral-250 text-neutral-700 font-extrabold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-4xs"
+                  title="Ubah Profil & Kata Sandi"
+                >
+                  <User className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="hidden sm:inline">Ubah Profil</span>
+                </button>
+                
+                <button
+                  onClick={handleLogout}
+                  className="bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-white" />
+                  <span className="hidden sm:inline">Keluar</span>
+                </button>
+              </div>
             ) : (
               <div className="flex flex-col md:flex-row items-stretch md:items-center gap-1.5 sm:gap-2 w-full md:w-auto">
                 {/* On Desktop: Show full "Masuk" and back home controls (hidden on Mobile since it shifted to row 1) */}
@@ -1270,10 +1529,6 @@ export default function App() {
                     >
                       Verifikasi & Masuk Dashboard
                     </button>
-                    
-                    <p className="text-[10px] text-neutral-450 italic text-center leading-relaxed">
-                      * Tips Sandbox: Masuk sebagai Pengawas dengan akun <strong>superadmin</strong> / <strong>superadmin123</strong>
-                    </p>
                   </form>
                 </div>
               </div>
@@ -1565,9 +1820,180 @@ export default function App() {
               </div>
             )}
 
+            {/* 4. EDIT PROFILE AND PASSWORD MODAL */}
+            {showProfileModal && (
+              <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 bg-neutral-950/65 backdrop-blur-md animate-fade-in text-left">
+                {/* Backdrop closer click */}
+                <div className="absolute inset-0 min-h-screen" onClick={() => setShowProfileModal(false)} />
+
+                <div className="relative bg-white rounded-3xl border border-neutral-150 shadow-2xl w-full max-w-md overflow-hidden z-10 transition-all scale-100 p-6 md:p-8 space-y-4 my-auto">
+                  
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-neutral-900 tracking-tight">Pengaturan Profil Saya</h3>
+                        <p className="text-[10px] text-neutral-450 uppercase font-bold tracking-wider">
+                          {currentUser?.role === 'superadmin' ? 'Superadmin' : (
+                            currentUser?.subRole === 'pimpinan' ? 'Pimpinan LKP' : 'Akses Staff'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowProfileModal(false)}
+                      className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {profileError && (
+                    <div className="p-3 bg-red-50 text-red-800 border border-red-200 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+                      <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                      <span>{profileError}</span>
+                    </div>
+                  )}
+
+                  {profileSuccess && (
+                    <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{profileSuccess}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveProfileChanges} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-neutral-650 block mb-1.5">Nama Lengkap / Nama Lembaga</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="Ketik nama lengkap Anda"
+                        className="w-full text-xs border border-neutral-200 rounded-xl p-3 bg-neutral-50/50 focus:ring-1 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all font-semibold text-neutral-800" 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-neutral-650 block mb-1.5">Email / Username Login</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
+                        placeholder="Ketik username atau email login"
+                        className="w-full text-xs border border-neutral-200 rounded-xl p-3 bg-neutral-50/50 focus:ring-1 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all font-semibold text-neutral-800" 
+                      />
+                    </div>
+
+                    <div className="border-t border-dashed border-neutral-200 pt-3 mt-3">
+                      <h4 className="text-[10px] font-black text-neutral-450 uppercase tracking-wider mb-2.5">Keamanan / Ganti Sandi Baru</h4>
+                      
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <label className="text-xs font-bold text-neutral-650 block mb-1">Kata Sandi Lama</label>
+                          <div className="relative">
+                            <input 
+                              type={profileShowOldPass ? 'text' : 'password'} 
+                              value={profileOldPassword}
+                              onChange={(e) => setProfileOldPassword(e.target.value)}
+                              placeholder="Masukkan sandi saat ini"
+                              className="w-full text-xs border border-neutral-200 rounded-xl p-3 pr-10 bg-neutral-50/50 focus:ring-1 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all font-mono" 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfileShowOldPass(!profileShowOldPass)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                            >
+                              {profileShowOldPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <label className="text-xs font-bold text-neutral-650 block mb-1">Kata Sandi Baru</label>
+                          <div className="relative">
+                            <input 
+                              type={profileShowNewPass ? 'text' : 'password'} 
+                              value={profilePassword}
+                              onChange={(e) => setProfilePassword(e.target.value)}
+                              placeholder="Kosongkan jika tidak ingin diubah"
+                              className="w-full text-xs border border-neutral-200 rounded-xl p-3 pr-10 bg-neutral-50/50 focus:ring-1 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all font-mono" 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfileShowNewPass(!profileShowNewPass)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                            >
+                              {profileShowNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="relative">
+                          <label className="text-xs font-bold text-neutral-650 block mb-1">Konfirmasi Kata Sandi Baru</label>
+                          <div className="relative">
+                            <input 
+                              type={profileShowConfirmPass ? 'text' : 'password'} 
+                              value={profileConfirmPassword}
+                              onChange={(e) => setProfileConfirmPassword(e.target.value)}
+                              placeholder="Ulangi kata sandi baru Anda"
+                              className="w-full text-xs border border-neutral-200 rounded-xl p-3 pr-10 bg-neutral-50/50 focus:ring-1 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all font-mono" 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfileShowConfirmPass(!profileShowConfirmPass)}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                            >
+                              {profileShowConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowProfileModal(false)}
+                        className="flex-1 bg-neutral-100 hover:bg-neutral-200 active:scale-98 text-neutral-700 font-extrabold text-xs py-3 rounded-xl transition-all cursor-pointer border border-neutral-200 text-center"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-xs py-3 rounded-xl shadow-3xs transition-all cursor-pointer text-center"
+                      >
+                        Simpan Perubahan
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
         {/* VIEW: LOGGED IN ROLE -> SUPERADMIN PANEL */}
         {currentUser && currentUser.role === 'superadmin' && (
           <div className="space-y-6" id="superadmin-canvas">
+            {/* Notifikasi Peringatan Sisa Kapasitas < 10% */}
+            {isLowCapacity && (
+              <div className="bg-red-50 border border-red-200 p-4 rounded-3xl shadow-sm flex items-start gap-3.5 text-left animate-bounce-subtle">
+                <div className="bg-red-100 p-2.5 rounded-2xl text-red-700 shrink-0 shadow-2xs">
+                  <span className="text-xl">⚠️</span>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-red-950 text-sm">Peringatan Kapasitas Penyimpanan Firebase Hampir Habis!</h4>
+                  <p className="text-xs text-red-700 leading-relaxed font-sans">
+                    Sisa kapasitas penyimpanan database Firebase saat ini adalah <strong className="font-black text-red-900">{remainingPercentage}%</strong> ({dbSizeKb} KB dari {storageLimitKb} KB). Kapasitas penyimpanan berada di bawah batas aman 10%! Silakan hapus data lembaga yang tidak diperlukan atau tingkatkan limit penyimpanan di bawah untuk menghindari penolakan tulis (Write Rejection) dari Firestore.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Header info */}
             <div className="bg-white p-6 rounded-3xl border border-neutral-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -1592,61 +2018,191 @@ export default function App() {
               </div>
             </div>
 
+            {/* MONITOR KAPASITAS PENYIMPANAN FIREBASE (Superadmin-Only) */}
+            <div className="bg-white p-6 rounded-3xl border border-neutral-100 shadow-sm space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl transition-all ${isLowCapacity ? 'bg-red-50 text-red-650 animate-pulse border border-red-200/50' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-neutral-900 text-sm tracking-tight">Kapasitas Penyimpanan Firebase (Firestore)</h3>
+                    <p className="text-[11px] text-neutral-500">Pemantauan ukuran penyimpanan data riil di Firebase Cloud.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-neutral-500">Batas Simulasi:</span>
+                  <select
+                    value={storageLimitKb}
+                    onChange={(e) => setStorageLimitKb(Number(e.target.value))}
+                    className="p-1.5 px-2.5 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-xl text-xs font-bold text-neutral-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-3xs cursor-pointer transition-all"
+                  >
+                    <option value="50">50 KB (Sangat Ketat)</option>
+                    <option value="100">100 KB (Demo Default)</option>
+                    <option value="200">200 KB (Menengah)</option>
+                    <option value="1024">1 MB (Skala Kecil)</option>
+                    <option value="1048576">1 GB (Paket Spark Free Tier)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Stat 1 */}
+                <div className="bg-neutral-50/50 p-4 rounded-2xl border border-neutral-100 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block">Kapasitas Terpakai</span>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-neutral-850 font-mono">{dbSizeKb}</span>
+                    <span className="text-xs font-bold text-neutral-500">KB</span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 mt-1 block">Diestimasi dari isi payload dokumen aktif</span>
+                </div>
+
+                {/* Stat 2 */}
+                <div className={`p-4 rounded-2xl border flex flex-col justify-between transition-all ${
+                  isLowCapacity ? 'bg-red-50/40 border-red-200' : 'bg-neutral-50/50 border-neutral-100'
+                }`}>
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block">Sisa Kapasitas</span>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className={`text-2xl font-black font-mono ${isLowCapacity ? 'text-red-700' : 'text-emerald-700'}`}>
+                      {remainingPercentage}%
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold mt-1 block">
+                    {isLowCapacity ? '⚠️ Sisa di bawah batas aman 10%!' : '✅ Status kapasitas aman'}
+                  </span>
+                </div>
+
+                {/* Stat 3 */}
+                <div className="bg-neutral-50/50 p-4 rounded-2xl border border-neutral-100 flex flex-col justify-between">
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block">Batas Maksimum</span>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-neutral-850 font-mono">
+                      {storageLimitKb >= 1024 ? `${(storageLimitKb/1024).toFixed(0)} MB` : `${storageLimitKb} KB`}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 mt-1 block">Ubah limit untuk menguji notifikasi</span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[11px] font-bold text-neutral-500 font-mono">
+                  <span>Usage Progress ({usagePercentage}%)</span>
+                  <span>{dbSizeKb} KB / {storageLimitKb} KB</span>
+                </div>
+                <div className="w-full bg-neutral-100 h-3 rounded-full overflow-hidden border border-neutral-150 p-0.5">
+                  <div
+                    style={{ width: `${usagePercentage}%` }}
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      isLowCapacity 
+                        ? 'bg-red-600 animate-pulse' 
+                        : usagePercentage > 75 
+                          ? 'bg-amber-500' 
+                          : 'bg-emerald-600'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-6">
               
               {/* List Lembaga & Pengaturan Masa Pemakian */}
               <div className="bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
-                <h3 className="font-bold text-neutral-900 text-sm">Status & Konfigurasi Batas Akses</h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
+                  <div>
+                    <h3 className="font-bold text-neutral-900 text-sm">Status & Konfigurasi Batas Akses</h3>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">Kelola batas tanggal aktif lisensi dan akses operasional lembaga.</p>
+                  </div>
+                  
+                  {/* Search Bar */}
+                  <div className="relative w-full md:w-80">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+                      <Search className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Cari nama, email, NPSN, program..."
+                      value={superadminSearchQuery}
+                      onChange={(e) => setSuperadminSearchQuery(e.target.value)}
+                      className="w-full text-xs pl-10 pr-9 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 border border-neutral-250 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white shadow-3xs transition-all"
+                    />
+                    {superadminSearchQuery && (
+                      <button
+                        onClick={() => setSuperadminSearchQuery('')}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
                 
                 <div className="space-y-3">
-                  {institutions.map(inst => {
-                    const expired = isLembagaExpired(inst);
-                    
-                    return (
-                      <div key={inst.id} className="p-4 border border-neutral-100 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-50/20">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-neutral-800 text-sm">{inst.name}</h4>
-                            <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                              expired ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            }`}>
-                              {expired ? 'Masa Habis' : 'Aktif'}
-                            </span>
+                  {filteredSuperadminInstitutions.length === 0 ? (
+                    <div className="p-8 border border-dashed border-neutral-200 rounded-2xl text-center space-y-2 bg-neutral-50/20">
+                      <p className="text-sm font-bold text-neutral-700">Tidak ada lembaga kursus yang cocok</p>
+                      <p className="text-xs text-neutral-400">Silakan ubah kata kunci pencarian Anda.</p>
+                      {superadminSearchQuery && (
+                        <button
+                          onClick={() => setSuperadminSearchQuery('')}
+                          className="mt-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 underline cursor-pointer"
+                        >
+                          Reset Pencarian
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    filteredSuperadminInstitutions.map(inst => {
+                      const expired = isLembagaExpired(inst);
+                      
+                      return (
+                        <div key={inst.id} className="p-4 border border-neutral-100 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-50/20 hover:border-neutral-200 transition-all">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-neutral-800 text-sm">{inst.name}</h4>
+                              <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                                expired ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              }`}>
+                                {expired ? 'Masa Habis' : 'Aktif'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-neutral-400 mt-1 font-mono">{inst.email} | Sandi: {inst.password}</p>
+                            <div className="flex gap-3 text-[10px] text-neutral-500 mt-2">
+                              <span>Siswa: <strong>{inst.students?.length || 0}</strong></span>
+                              <span>Guru: <strong>{inst.teachers?.length || 0}</strong></span>
+                              <span>Program: <strong>{inst.programs?.length || 0}</strong></span>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-neutral-400 mt-1 font-mono">{inst.email} | Sandi: {inst.password}</p>
-                          <div className="flex gap-3 text-[10px] text-neutral-500 mt-2">
-                            <span>Siswa: <strong>{inst.students?.length || 0}</strong></span>
-                            <span>Guru: <strong>{inst.teachers?.length || 0}</strong></span>
-                            <span>Program: <strong>{inst.programs?.length || 0}</strong></span>
+
+                          {/* Controls: Edit Masa Pemakaian, Delete Lembaga Kursus */}
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <div className="text-xs text-neutral-600">
+                              <span className="block text-[9px] font-semibold uppercase text-neutral-400">Atur Masa Pemakaian Expiry</span>
+                              <input
+                                type="date"
+                                value={inst.activeUntil}
+                                onChange={(e) => adjustActiveUntilDate(inst.id, e.target.value)}
+                                className="p-1.5 border border-neutral-200 rounded text-xs bg-white mt-1 shadow-3xs"
+                              />
+                              <p className="text-[10px] text-neutral-400 italic mt-1 font-mono">
+                                ({getDaysRemainingStr(inst.activeUntil)})
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => deleteInstitution(inst.id, inst.name)}
+                              className="bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 p-2.5 rounded-xl text-red-650 flex items-center justify-center transition-colors"
+                              title="Hapus Lembaga"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
-
-                        {/* Controls: Edit Masa Pemakaian, Delete Lembaga Kursus */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                          <div className="text-xs text-neutral-600">
-                            <span className="block text-[9px] font-semibold uppercase text-neutral-400">Atur Masa Pemakaian Expiry</span>
-                            <input
-                              type="date"
-                              value={inst.activeUntil}
-                              onChange={(e) => adjustActiveUntilDate(inst.id, e.target.value)}
-                              className="p-1.5 border border-neutral-200 rounded text-xs bg-white mt-1 shadow-3xs"
-                            />
-                            <p className="text-[10px] text-neutral-400 italic mt-1 font-mono">
-                              ({getDaysRemainingStr(inst.activeUntil)})
-                            </p>
-                          </div>
-
-                          <button
-                            onClick={() => deleteInstitution(inst.id, inst.name)}
-                            className="bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 p-2.5 rounded-xl text-red-650 flex items-center justify-center transition-colors"
-                            title="Hapus Lembaga"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
