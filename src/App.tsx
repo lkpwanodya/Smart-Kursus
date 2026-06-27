@@ -20,7 +20,7 @@ import PublicLandingPage from './components/PublicLandingPage';
 
 import { loadInstitutions, sanitizeForFirestore } from './utils/firebaseSync';
 import { db } from './utils/firebase';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 
 export default function App() {
@@ -34,6 +34,16 @@ export default function App() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
   const prevInstitutionsRef = useRef<Institution[]>([]);
+
+  // Portal Landing welcome heading & description states customizable by superadmin
+  const [welcomeHeading, setWelcomeHeading] = useState<string>(() => {
+    return localStorage.getItem('portal_welcome_heading') || "🏫 Selamat Datang di Smart Kursus";
+  });
+  const [welcomeDescription, setWelcomeDescription] = useState<string>(() => {
+    return localStorage.getItem('portal_welcome_description') || "Sistem informasi tata kelola digital premium terintegrasi 8 Standar Nasional Pendidikan (SNP) Akreditasi, pembukuan debit kredit terpilah, RPP asisten AI, dan pendaftaran online akademik mandiri.";
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -52,6 +62,25 @@ export default function App() {
           } else {
             setSelectedPublicLkpId(null);
           }
+        }
+
+        // Muat pengaturan portal welcome dari Firestore
+        try {
+          const docRef = doc(db, 'portal_settings', 'landing');
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const sData = docSnap.data();
+            if (sData.welcomeHeading) {
+              setWelcomeHeading(sData.welcomeHeading);
+              localStorage.setItem('portal_welcome_heading', sData.welcomeHeading);
+            }
+            if (sData.welcomeDescription) {
+              setWelcomeDescription(sData.welcomeDescription);
+              localStorage.setItem('portal_welcome_description', sData.welcomeDescription);
+            }
+          }
+        } catch (settingsError) {
+          console.warn("Gagal memuat pengaturan portal, menggunakan nilai default local:", settingsError);
         }
       } catch (e) {
         console.error("Gagal inisialisasi database:", e);
@@ -144,6 +173,7 @@ export default function App() {
   const [regEnableAI, setRegEnableAI] = useState(true);
   const [regIsGenerating, setRegIsGenerating] = useState(false);
   const [regGenStatus, setRegGenStatus] = useState('');
+  const [regAgreeDisclaimer, setRegAgreeDisclaimer] = useState(false);
 
   // 6. Superadmin and creation form states
   const [superNewLkpName, setSuperNewLkpName] = useState('');
@@ -711,6 +741,11 @@ export default function App() {
     e.preventDefault();
     setRegError('');
     setRegSuccess('');
+
+    if (!regAgreeDisclaimer) {
+      setRegError('⚠️ Anda harus menyetujui Disclaimer penafian tanggung jawab sebelum mendaftar!');
+      return;
+    }
 
     if (!regName || !regEmail || !regPassword) {
       setRegError('⚠️ Semua kolom pendaftaran wajib diisi!');
@@ -1540,10 +1575,10 @@ export default function App() {
                     </span>
                   </div>
                   <h2 className="text-base md:text-lg font-black tracking-tight font-display uppercase leading-snug text-white">
-                    🏫 Selamat Datang di Smart Kursus
+                    {welcomeHeading}
                   </h2>
                   <p className="text-[11px] md:text-xs text-emerald-100/95 leading-relaxed font-sans max-w-3xl">
-                    Sistem informasi tata kelola digital premium terintegrasi 8 Standar Nasional Pendidikan (SNP) Akreditasi, pembukuan debit kredit terpilah, RPP asisten AI, dan pendaftaran online akademik mandiri.
+                    {welcomeDescription}
                   </p>
                 </div>
                 <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 hidden md:block z-10 flex-shrink-0">
@@ -2041,6 +2076,30 @@ export default function App() {
                         </div>
                       </div>
 
+                      {/* DISCLAIMER & PENAFIAN TANGGUNG JAWAB */}
+                      <div className="bg-red-50/50 p-3.5 rounded-xl border border-red-100 text-left space-y-2">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-red-600" />
+                          <span className="text-[11px] font-extrabold text-red-800 uppercase tracking-wider">Disclaimer & Penafian Tanggung Jawab</span>
+                        </div>
+                        <p className="text-[10px] text-red-750 leading-relaxed font-semibold">
+                          Pembuat aplikasi tidak bertanggung jawab atas kehilangan data apa pun dan tidak dapat dituntut secara hukum. Aplikasi ini disediakan "sebagaimana adanya" tanpa jaminan dalam bentuk apa pun.
+                        </p>
+                        <div className="flex items-start gap-2 pt-1">
+                          <input
+                            type="checkbox"
+                            id="regAgreeDisclaimer"
+                            required
+                            checked={regAgreeDisclaimer}
+                            onChange={(e) => setRegAgreeDisclaimer(e.target.checked)}
+                            className="mt-0.5 rounded text-red-600 focus:ring-red-500 cursor-pointer h-3.5 w-3.5"
+                          />
+                          <label htmlFor="regAgreeDisclaimer" className="text-[11px] text-red-850 cursor-pointer leading-tight select-none font-extrabold">
+                            Saya mengerti, menyetujui, dan bersedia menanggung risiko kehilangan data secara mandiri.
+                          </label>
+                        </div>
+                      </div>
+
                       <button
                         type="submit"
                         disabled={regIsGenerating}
@@ -2515,6 +2574,92 @@ export default function App() {
 
             <div className="grid grid-cols-1 gap-6">
               
+              {/* KUSTOMISASI BANNER BERANDA UTAMA PORTAL */}
+              <div className="bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm space-y-4 text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-neutral-900 text-sm tracking-tight">Kustomisasi Banner Sambutan Beranda Portal</h3>
+                      <p className="text-[11px] text-neutral-500">Edit tajuk utama dan deskripsi penyelarasan mutu untuk semua pengunjung portal.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Tajuk Sambutan (Heading)</label>
+                    <input
+                      type="text"
+                      className="w-full text-xs p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-250 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white font-semibold text-neutral-800 transition-all"
+                      placeholder="Contoh: 🏫 Selamat Datang di Smart Kursus"
+                      value={welcomeHeading}
+                      onChange={(e) => setWelcomeHeading(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Deskripsi Portal (Description)</label>
+                    <textarea
+                      rows={3}
+                      className="w-full text-xs p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-250 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white font-medium text-neutral-700 leading-relaxed transition-all"
+                      placeholder="Masukkan penjelasan singkat mengenai layanan, fitur utama, atau standar mutu portal..."
+                      value={welcomeDescription}
+                      onChange={(e) => setWelcomeDescription(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex-1">
+                      {settingsSuccess && (
+                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 animate-fade-in">
+                          <CheckCircle className="w-4 h-4" /> Berhasil disimpan ke database Firestore dan disinkronkan!
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setIsSavingSettings(true);
+                        setSettingsSuccess(false);
+                        try {
+                          const docRef = doc(db, 'portal_settings', 'landing');
+                          await setDoc(docRef, {
+                            welcomeHeading: welcomeHeading,
+                            welcomeDescription: welcomeDescription,
+                            updatedAt: new Date().toISOString()
+                          });
+                          localStorage.setItem('portal_welcome_heading', welcomeHeading);
+                          localStorage.setItem('portal_welcome_description', welcomeDescription);
+                          setSettingsSuccess(true);
+                          setTimeout(() => setSettingsSuccess(false), 3000);
+                        } catch (err) {
+                          console.error("Gagal menyimpan kustomisasi portal:", err);
+                          alert("Gagal menyimpan perubahan ke Firestore.");
+                        } finally {
+                          setIsSavingSettings(false);
+                        }
+                      }}
+                      disabled={isSavingSettings}
+                      className="bg-emerald-600 hover:bg-emerald-750 disabled:bg-neutral-300 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 select-none font-sans"
+                    >
+                      {isSavingSettings ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Menyimpan...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Database className="w-3.5 h-3.5" />
+                          <span>Simpan Perubahan</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* List Lembaga & Pengaturan Masa Pemakian */}
               <div className="bg-white p-6 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
                 <div className="flex flex-col gap-4 border-b border-neutral-100 pb-4">

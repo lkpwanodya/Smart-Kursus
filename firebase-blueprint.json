@@ -31,12 +31,35 @@
         "name",
         "email"
       ]
+    },
+    "PortalSettings": {
+      "title": "PortalSettings",
+      "description": "Represents customizable home page portal-wide text elements.",
+      "type": "object",
+      "properties": {
+        "welcomeHeading": {
+          "type": "string",
+          "description": "The hero welcome title text displayed on the main directory page."
+        },
+        "welcomeDescription": {
+          "type": "string",
+          "description": "The description subtext underneath the welcome heading."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp indicating when customization was last updated."
+        }
+      }
     }
   },
   "firestore": {
     "/institutions/{institutionId}": {
       "schema": "Institution",
       "description": "The central collection containing all course institutions registered under the multi-tenant course governance SaaS platform."
+    },
+    "/portal_settings/{settingId}": {
+      "schema": "PortalSettings",
+      "description": "Configuration settings for customized portal elements such as headings and descriptions."
     }
   }
 }

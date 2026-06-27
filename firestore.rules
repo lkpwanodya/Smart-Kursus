@@ -16,5 +16,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isValidId(institutionId);
     }
+
+    // 4. Portal Settings Collection Access Rules
+    match /portal_settings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId);
+    }
   }
 }
