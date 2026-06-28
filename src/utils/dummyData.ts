@@ -80,15 +80,15 @@ export const INITIAL_SNP_STANDARDS = (): SnpStandard[] => [
 
 export const DUMMY_INSTITUTIONS = (): Institution[] => [
   {
-    id: 'lkp-tech',
+    id: 'lembaga-tech',
     name: 'Lembaga Kursus Computer Tech',
-    email: 'tech@lkp.id',
+    email: 'tech@lembaga.id',
     password: 'password123',
     activeUntil: '2026-12-31',
     profile: {
       address: 'Jl. Merdeka No. 45, Bandung',
       phone: '022-4217890',
-      email: 'tech@lkp.id',
+      email: 'tech@lembaga.id',
       vision: 'Menjadi pusat pelatihan teknologi informasi terdepan dan mencetak profesional IT yang kompeten, kreatif, serta siap kerja.',
       mission: '1. Menyelenggarakan kursus pemrograman modern yang sesuai kebutuhan industri.\n2. Menyediakan sarana praktek berteknologi mutakhir.\n3. Mengembangkan kerjasama dengan berbagai perusahaan nasional untuk penyerapan lulusan.',
       specialty: 'Teknologi Informasi'
@@ -167,7 +167,7 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       {
         id: 'staff-1',
         name: 'Andi Saputra',
-        username: 'admin@wanodya.lkp',
+        username: 'admin@wanodya.lembaga',
         role: 'staf_admin',
         active: true,
         password: 'password123'
@@ -175,7 +175,7 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       {
         id: 'staff-2',
         name: 'Siti Rahma, A.Md',
-        username: 'bendahara@wanodya.lkp',
+        username: 'bendahara@wanodya.lembaga',
         role: 'bendahara',
         active: true,
         password: 'password123'
@@ -183,7 +183,7 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
       {
         id: 'staff-teacher-t1',
         name: 'Budi Santoso, M.T.',
-        username: 'budi@wanodya.lkp',
+        username: 'budi@wanodya.lembaga',
         role: 'pengajar',
         active: true,
         password: 'password123'
@@ -191,15 +191,15 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
     ]
   },
   {
-    id: 'lkp-english',
+    id: 'lembaga-english',
     name: 'Lembaga Kursus English Corner',
-    email: 'english@lkp.id',
+    email: 'english@lembaga.id',
     password: 'password123',
     activeUntil: '2026-10-31',
     profile: {
       address: 'Jl. Sudirman No. 80, Yogyakarta',
       phone: '0274-567890',
-      email: 'english@lkp.id',
+      email: 'english@lembaga.id',
       vision: 'Menembus batas dunia dengan kemampuan bahasa global yang mumpuni, komunikatif, dan berlisensi standar internasional.',
       mission: '1. Menyajikan metode penguasaan bahasa lisan praktis, menyenangkan, dan relevan.\n2. Memberikan pendampingan intensif untuk ujian IELTS & TOEFL.\n3. Menyediakan atmosfer belajar full English environment harian.',
       specialty: 'Bahasa Asing'
@@ -249,15 +249,15 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
     raportCards: []
   },
   {
-    id: 'lkp-busana',
+    id: 'lembaga-busana',
     name: 'Lembaga Kursus Tata Busana Cantika',
-    email: 'cantika@lkp.id',
+    email: 'cantika@lembaga.id',
     password: 'password123',
     activeUntil: '2026-09-15',
     profile: {
       address: 'Jl. Pemuda No. 12, Surabaya',
       phone: '031-5321456',
-      email: 'cantika@lkp.id',
+      email: 'cantika@lembaga.id',
       vision: 'Mewujudkan wirausaha muda tata busana dan desainer terkemuka tingkat nasional yang memiliki jiwa kemandirian seni.',
       mission: '1. Memberikan kompetensi teknik jahit berkualitas tinggi, presisi, dan indah.\n2. Melatih pemahaman pola baju klasik dan modern.\n3. Melahirkan kompetensi bisnis fesyen mandiri bagi alumni.',
       specialty: 'Tata Busana'
@@ -405,7 +405,7 @@ export const getDynamicSnpStandards = (lembaga: Institution): SnpStandard[] => {
           id: '5c', 
           task: 'Ruang administrasi dan sanitasi terpisah dan layak', 
           checked: Array.from(new Set((lembaga.facilities || []).map(f => f.location).filter(Boolean))).length > 1, 
-          evidence: (lembaga.facilities || []).length > 1 ? 'Denah_Tata_Ruang_LKP.pdf' : '' 
+          evidence: (lembaga.facilities || []).length > 1 ? 'Denah_Tata_Ruang_Lembaga.pdf' : '' 
         }
       ]
     },

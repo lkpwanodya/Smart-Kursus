@@ -231,11 +231,11 @@ Instruksikan siswa untuk mengeksekusi langkah-langkah pengerjaan:
     } else if (task === 'faq') {
       mockResult = JSON.stringify([
         {
-          q: `Bagaimana sistem pembelajaran ${context || 'materi'} di LKP ${name || 'kami'}?`,
-          a: `Pembelajaran ${context || 'kursus'} di LKP ${name || 'kami'} dirancang secara interaktif, mengedepankan praktek langsung (80%) and teori (20%) agar lulusan siap kerja dan kompeten.`
+          q: `Bagaimana sistem pembelajaran ${context || 'materi'} di Lembaga ${name || 'kami'}?`,
+          a: `Pembelajaran ${context || 'kursus'} di Lembaga ${name || 'kami'} dirancang secara interaktif, mengedepankan praktek langsung (80%) and teori (20%) agar lulusan siap kerja dan kompeten.`
         },
         {
-          q: `Apakah program ${context || 'kursus'} di LKP ${name || 'kami'} cocok untuk pemula?`,
+          q: `Apakah program ${context || 'kursus'} di Lembaga ${name || 'kami'} cocok untuk pemula?`,
           a: `Tentu sangat cocok! Kurikulum kami disusun terstruktur mulai dari materi dasar paling awal hingga mahir, lengkap dengan bimbingan personal dari instruktur berpengalaman.`
         },
         {
@@ -246,10 +246,10 @@ Instruksikan siswa untuk mengeksekusi langkah-langkah pengerjaan:
     } else if (task === 'rights_duties') {
       mockResult = JSON.stringify({
         rights: `Mengusulkan program inovasi peningkatan mutu, mengkoordinir sarana internal divisi ${name || 'Kursus'}, serta mewakili lembaga dalam koordinasi operasional terkait.`,
-        duties: `Menyusun rencana kerja unit ${name || 'Operasional LKP'}, mengawasi administrasi aktivitas belajar mengajar harian, serta melaporkan dokumentasi evaluasi berkala kepada direktur.`
+        duties: `Menyusun rencana kerja unit ${name || 'Operasional Lembaga'}, mengawasi administrasi aktivitas belajar mengajar harian, serta melaporkan dokumentasi evaluasi berkala kepada direktur.`
       });
     } else if (task === 'sk') {
-      const matchesLkp = context ? context.match(/Lembaga Kursus:\s*([^\n]+)/) : null;
+      const matchesLembaga = context ? context.match(/Lembaga Kursus:\s*([^\n]+)/) : null;
       const matchesAddr = context ? context.match(/Alamat:\s*([^\n]+)/) : null;
       const matchesNpsn = context ? context.match(/NPSN:\s*([^\n]+)/) : null;
       const matchesIzin = context ? context.match(/Izin Operasional Dinas Pendidikan:\s*([^\n]+)/) : null;
@@ -264,7 +264,7 @@ Instruksikan siswa untuk mengeksekusi langkah-langkah pengerjaan:
       const matchesNum = context ? context.match(/Nomor SK:\s*([^\n]+)/) : null;
       const matchesType = context ? context.match(/Tipe SK:\s*([^\n]+)/) : null;
       
-      const lkpName = matchesLkp ? matchesLkp[1].trim() : 'Lembaga Pendidikan/Kursus';
+      const lembagaName = matchesLembaga ? matchesLembaga[1].trim() : 'Lembaga Pendidikan/Kursus';
       const address = matchesAddr ? matchesAddr[1].trim() : 'DIY Yogyakarta';
       const npsn = matchesNpsn ? matchesNpsn[1].trim() : 'K9998182';
       const izin = matchesIzin ? matchesIzin[1].trim() : '421.10/01-Disdik';
@@ -274,20 +274,20 @@ Instruksikan siswa untuk mengeksekusi langkah-langkah pengerjaan:
       const email = matchesEmail ? matchesEmail[1].trim() : 'info@lembaga.com';
       const skDateText = matchesDate ? matchesDate[1].trim() : '22 Juni 2026';
 
-      const pName = matchesName ? matchesName[1].trim() : 'Staf LKP';
+      const pName = matchesName ? matchesName[1].trim() : 'Staf Lembaga';
       const pRole = matchesRole ? matchesRole[1].trim() : 'Staf Operasional';
-      const pNum = matchesNum ? matchesNum[1].trim() : '142/SK-DIR/LKP-WN/VI/2026';
+      const pNum = matchesNum ? matchesNum[1].trim() : '142/SK-DIR/Lembaga-WN/VI/2026';
       const pType = matchesType ? matchesType[1].trim() : 'SK Pengangkatan Jabatan';
 
       mockResult = `KOP SURAT RESMI INSTITUSI
 ==================================================
-${lkpName.toUpperCase()}
+${lembagaName.toUpperCase()}
 Izin Dinas: ${izin} | NPSN: ${npsn}
 Alamat: ${address}
 Telepon: ${phone} | Email: ${email}
 ==================================================
 
-SURAT KEPUTUSAN PIMPINAN ${lkpName.toUpperCase()}
+SURAT KEPUTUSAN PIMPINAN ${lembagaName.toUpperCase()}
 Nomor: ${pNum}
 
 TENTANG
@@ -317,12 +317,12 @@ KEEMPAT: Keputusan ini berlaku sejak tanggal ditetapkan, dan jika terdapat kekel
 Ditetapkan di: Yogyakarta
 Pada Tanggal: ${skDateText}
 
-Pimpinan ${lkpName},
+Pimpinan ${lembagaName},
 
 
 ${pimpName}
 ${pimpRole}`;
-    } else if (task === 'lkp_generate') {
+    } else if (task === 'lembaga_generate') {
       const field = (context || '').toLowerCase();
       let genData = {
         vision: '',
@@ -348,8 +348,8 @@ ${pimpRole}`;
             { name: "Manekin Pas Tubuh S/M/L", count: 6, condition: "Baik" }
           ],
           teachers: [
-            { name: "Ibu Fitri Handayani, S.Pd", email: "fitri.handayani@lkp-fashion.com", phone: "0812-1122-3344" },
-            { name: "Bapak Junaidi, M.Ds", email: "junaidi.design@lkp-fashion.com", phone: "0813-5566-7788" }
+            { name: "Ibu Fitri Handayani, S.Pd", email: "fitri.handayani@lembaga-fashion.com", phone: "0812-1122-3344" },
+            { name: "Bapak Junaidi, M.Ds", email: "junaidi.design@lembaga-fashion.com", phone: "0813-5566-7788" }
           ]
         };
       } else if (field.includes('otomotif') || field.includes('motor') || field.includes('mobil') || field.includes('kendaraan')) {
@@ -366,8 +366,8 @@ ${pimpRole}`;
             { name: "Mesin Bongkar Pasang Ban", count: 1, condition: "Baik" }
           ],
           teachers: [
-            { name: "Bapak Haryanto, S.T.", email: "haryanto@lkp-otomotif.id", phone: "0856-7890-1234" },
-            { name: "Bapak Rudi Hartono", email: "rudi.mekanik@lkp-otomotif.id", phone: "0812-4455-6677" }
+            { name: "Bapak Haryanto, S.T.", email: "haryanto@lembaga-otomotif.id", phone: "0856-7890-1234" },
+            { name: "Bapak Rudi Hartono", email: "rudi.mekanik@lembaga-otomotif.id", phone: "0812-4455-6677" }
           ]
         };
       } else if (field.includes('rias') || field.includes('kecantikan') || field.includes('beauty') || field.includes('makeup')) {
@@ -384,8 +384,8 @@ ${pimpRole}`;
             { name: "Alat Facial Treatment Vaporizer", count: 3, condition: "Baik" }
           ],
           teachers: [
-            { name: "Ibu Amalia Siregar", email: "amalia.mua@lkp-beauty.com", phone: "0819-3344-5566" },
-            { name: "Ibu Dewi Lestari, S.Pd", email: "dewi.lestari@lkp-beauty.com", phone: "0877-1122-9900" }
+            { name: "Ibu Amalia Siregar", email: "amalia.mua@lembaga-beauty.com", phone: "0819-3344-5566" },
+            { name: "Ibu Dewi Lestari, S.Pd", email: "dewi.lestari@lembaga-beauty.com", phone: "0877-1122-9900" }
           ]
         };
       } else {
@@ -393,8 +393,8 @@ ${pimpRole}`;
           vision: `Menjadi Lembaga Kursus bidang ${context || 'Keahlian'} terdepan yang menghasilkan lulusan unggul, kompeten, dan siap bersaing di pasar kerja.`,
           mission: `1. Menyelenggarakan pelatihan sistematis dan adaptif terhadap perkembangan teknologi.\n2. Menyediakan fasilitas praktek modern dan instruktur yang berpengalaman.\n3. Menjalin kerjasama penyerapan lulusan dengan dunia usaha dan industri.`,
           programs: [
-            { name: `Kursus ${context || 'Keahlian'} Tingkat Dasar`, code: "LKP-01", description: `Pengenalan dasar-dasar bidang ${context || 'Keahlian'} dari dasar hingga fungsional kerja.`, duration: "3 Bulan (120 Jam)" },
-            { name: `Kursus ${context || 'Keahlian'} Tingkat Lanjut`, code: "LKP-02", description: `Spesialisasi dan pendalaman teknik tingkat mahir pada bidang ${context || 'Keahlian'} untuk profesional kerja.`, duration: "2 Bulan (80 Jam)" }
+            { name: `Kursus ${context || 'Keahlian'} Tingkat Dasar`, code: "Lembaga-01", description: `Pengenalan dasar-dasar bidang ${context || 'Keahlian'} dari dasar hingga fungsional kerja.`, duration: "3 Bulan (120 Jam)" },
+            { name: `Kursus ${context || 'Keahlian'} Tingkat Lanjut`, code: "Lembaga-02", description: `Spesialisasi dan pendalaman teknik tingkat mahir pada bidang ${context || 'Keahlian'} untuk profesional kerja.`, duration: "2 Bulan (80 Jam)" }
           ],
           facilities: [
             { name: "Ruang Kelas AC & Proyektor Multimedia", count: 3, condition: "Baik" },
@@ -402,8 +402,8 @@ ${pimpRole}`;
             { name: "Modul Pembelajaran & Cetakan SOP", count: 20, condition: "Baik" }
           ],
           teachers: [
-            { name: "Bapak Syarifuddin, M.T.", email: "syarif@lkp-utama.sch.id", phone: "0812-9900-1122" },
-            { name: "Ibu Wahyu Ningsih, S.Kom", email: "wahyu@lkp-utama.sch.id", phone: "0811-2233-4455" }
+            { name: "Bapak Syarifuddin, M.T.", email: "syarif@lembaga-utama.sch.id", phone: "0812-9900-1122" },
+            { name: "Ibu Wahyu Ningsih, S.Kom", email: "wahyu@lembaga-utama.sch.id", phone: "0811-2233-4455" }
           ]
         };
       }
@@ -462,22 +462,22 @@ Berikan rincian Alat & Bahan yang dibutuhkan, Instruksi Langkah-Langkah Pengerja
 - Nilai Sikap / Perilaku: "${scoreAttitude}"
 Ulasan harus setebal 2-3 kalimat, objektif, memuji keberhasilan, ramah, dan memberikan saran peningkatan karir di masa depan.`;
     } else if (task === 'faq') {
-      prompt = `Buatlah 3 pasang pertanyaan dan jawaban (FAQ - Frequently Asked Questions) yang profesional, informatif, dan ramah untuk calon siswa atau pendaftar Lembaga Kursus Pelatihan (LKP) bernama "${name}".
+      prompt = `Buatlah 3 pasang pertanyaan dan jawaban (FAQ - Frequently Asked Questions) yang profesional, informatif, dan ramah untuk calon siswa atau pendaftar Lembaga Kursus Pelatihan bernama "${name}".
 Fokus topik/konteks FAQ yang diinginkan: "${context || 'Umum'}".
-Jawaban harus meyakinkan, profesional, mendalam namun mudah dipahami, dan memberikan kejelasan penuh mengenai LKP tersebut.
+Jawaban harus meyakinkan, profesional, mendalam namun mudah dipahami, dan memberikan kejelasan penuh mengenai Lembaga tersebut.
 Format output wajib berupa JSON Array dengan objek yang memiliki kunci "q" (pertanyaan) dan "a" (jawaban).`;
     } else if (task === 'rights_duties') {
-      prompt = `Berikan rekomendasi Hak & Kewenangan Jabatan serta Kewajiban & Tugas Pokok Jabatan untuk posisi/jabatan bernama "${name}" pada Lembaga Kursus dan Pelatihan (LKP).
-Atas Nama Pengurus/Staf: "${context || 'Pengurus LKP'}".
-Berikan ulasan yang sangat bermutu, formal, konkret untuk operasional LKP di Indonesia sesuai Standar Kompetensi Administrasi Manajemen Pendidikan Nonformal.
+      prompt = `Berikan rekomendasi Hak & Kewenangan Jabatan serta Kewajiban & Tugas Pokok Jabatan untuk posisi/jabatan bernama "${name}" pada Lembaga Kursus dan Pelatihan.
+Atas Nama Pengurus/Staf: "${context || 'Pengurus Lembaga'}".
+Berikan ulasan yang sangat bermutu, formal, konkret untuk operasional Lembaga di Indonesia sesuai Standar Kompetensi Administrasi Manajemen Pendidikan Nonformal.
 Format output harus berupa objek JSON dengan kunci "rights" (hak/kewenangan secara detail) and "duties" (kewajiban/tugas pokok secara detail).`;
     } else if (task === 'sk') {
       prompt = context;
-      systemInstruction = 'Anda adalah staf legalitas dan konsultan hukum organisasi nonformal khusus Lembaga Kursus dan Pelatihan (LKP). Buatlah draf Surat Keputusan (SK) formal yang sah, ringkas, padat, langsung ke intinya (tidak bertele-tele), rapi, menggunakan format kop surat dan tanda tangan yang sesuai profil lembaga.';
-    } else if (task === 'lkp_generate') {
-      prompt = `Buatlah draf data profil awal, visi misi, program kursus unggulan, serta sarana prasarana praktek yang realistis untuk pendaftaran baru Lembaga Kursus dan Pelatihan (LKP) bernama "${name}" yang bergerak di bidang keterampilan/vokasi: "${context}".
+      systemInstruction = 'Anda adalah staf legalitas dan konsultan hukum organisasi nonformal khusus Lembaga Kursus dan Pelatihan. Buatlah draf Surat Keputusan (SK) formal yang sah, ringkas, padat, langsung ke intinya (tidak bertele-tele), rapi, menggunakan format kop surat dan tanda tangan yang sesuai profil lembaga.';
+    } else if (task === 'lembaga_generate') {
+      prompt = `Buatlah draf data profil awal, visi misi, program kursus unggulan, serta sarana prasarana praktek yang realistis untuk pendaftaran baru Lembaga Kursus dan Pelatihan bernama "${name}" yang bergerak di bidang keterampilan/vokasi: "${context}".
 Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
-      systemInstruction = 'Anda adalah konsultan pendidikan vokasi SaaS di Indonesia. Bantu pendaftar membuat profil LKP baru berdasarkan bidang keterampilan vokasional yang mereka pilih agar siap diakreditasi dengan 8 SNP.';
+      systemInstruction = 'Anda adalah konsultan pendidikan vokasi SaaS di Indonesia. Bantu pendaftar membuat profil Lembaga baru berdasarkan bidang keterampilan vokasional yang mereka pilih agar siap diakreditasi dengan 8 SNP.';
     }
 
     const response = await ai.models.generateContent({
@@ -486,13 +486,13 @@ Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
       config: {
         systemInstruction,
         temperature: 0.7,
-        responseMimeType: (task === 'faq' || task === 'rights_duties' || task === 'paket_lengkap' || task === 'lkp_generate') ? 'application/json' : undefined,
+        responseMimeType: (task === 'faq' || task === 'rights_duties' || task === 'paket_lengkap' || task === 'lembaga_generate') ? 'application/json' : undefined,
         responseSchema: task === 'faq' ? {
           type: Type.ARRAY,
           items: {
             type: Type.OBJECT,
             properties: {
-              q: { type: Type.STRING, description: 'Pertanyaan eksplisit untuk calon pendaftar LKP' },
+              q: { type: Type.STRING, description: 'Pertanyaan eksplisit untuk calon pendaftar Lembaga' },
               a: { type: Type.STRING, description: 'Jawaban penjelasan ramah dan profesional' }
             },
             required: ['q', 'a']
@@ -500,8 +500,8 @@ Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
         } : task === 'rights_duties' ? {
           type: Type.OBJECT,
           properties: {
-            rights: { type: Type.STRING, description: 'Rekomendasi hak & kewenangan jabatan operasional LKP dalam kalimat terstruktur' },
-            duties: { type: Type.STRING, description: 'Rekomendasi kewajiban & tugas pokok harian pengurus LKP dalam kalimat terstruktur' }
+            rights: { type: Type.STRING, description: 'Rekomendasi hak & kewenangan jabatan operasional Lembaga dalam kalimat terstruktur' },
+            duties: { type: Type.STRING, description: 'Rekomendasi kewajiban & tugas pokok harian pengurus Lembaga dalam kalimat terstruktur' }
           },
           required: ['rights', 'duties']
         } : task === 'paket_lengkap' ? {
@@ -514,7 +514,7 @@ Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
             cara_penilaian: { type: Type.STRING, description: 'Panduan & Cara Penilaian dalam format Markdown Indonesia' }
           },
           required: ['rpp', 'lks', 'uji_teori', 'uji_praktek', 'cara_penilaian']
-        } : task === 'lkp_generate' ? {
+        } : task === 'lembaga_generate' ? {
           type: Type.OBJECT,
           properties: {
             vision: { type: Type.STRING, description: 'Visi lembaga kursus yang inspiratif dan berfokus pada keahlian vokasional tersebut' },
@@ -553,7 +553,7 @@ Format output wajib berupa objek JSON yang valid sesuai dengan responseSchema.`;
                 type: Type.OBJECT,
                 properties: {
                   name: { type: Type.STRING, description: 'Nama instruktur, contoh: "Siti Rahmawati, S.Pd", "Budi Hermawan"' },
-                  email: { type: Type.STRING, description: 'Alamat email fiktif, contoh: "siti.rahma@lkp.id"' },
+                  email: { type: Type.STRING, description: 'Alamat email fiktif, contoh: "siti.rahma@lembaga.id"' },
                   phone: { type: Type.STRING, description: 'Nomor telepon fiktif, contoh: "0812-9876-5432"' }
                 },
                 required: ['name', 'email', 'phone']

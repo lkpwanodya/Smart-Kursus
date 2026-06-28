@@ -184,7 +184,7 @@ Siswa dinyatakan memenuhi standar kompetensi industri jika memperoleh minimal ni
   }
 
   const [savedPackages, setSavedPackages] = useState<LessonPackage[]>(() => {
-    const key = `lkp_lessons_${lembaga.id}`;
+    const key = `lembaga_lessons_${lembaga.id}`;
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
@@ -202,7 +202,7 @@ Siswa dinyatakan memenuhi standar kompetensi industri jika memperoleh minimal ni
       return;
     }
 
-    const key = `lkp_lessons_${lembaga.id}`;
+    const key = `lembaga_lessons_${lembaga.id}`;
     const updated = [...savedPackages];
     const existingIndex = updated.findIndex(p => p.topic.toLowerCase() === mainTopic.trim().toLowerCase());
 
@@ -245,7 +245,7 @@ Siswa dinyatakan memenuhi standar kompetensi industri jika memperoleh minimal ni
       setDeletingId(id);
       return;
     }
-    const key = `lkp_lessons_${lembaga.id}`;
+    const key = `lembaga_lessons_${lembaga.id}`;
     const filtered = savedPackages.filter(p => p.id !== id);
     setSavedPackages(filtered);
     localStorage.setItem(key, JSON.stringify(filtered));
@@ -466,7 +466,7 @@ ${penilaianContent}
           
           <div class="letterhead">
             <div class="gov">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</div>
-            <h1>LEMBAGA KURSUS DAN PELATIHAN (LKP) ${lembaga.name.toUpperCase()}</h1>
+            <h1>LEMBAGA KURSUS DAN PELATIHAN ${lembaga.name.toUpperCase()}</h1>
             <p>Izin Operasional No: ${lembaga.profile?.skDisdik || '421.9/120-Disdik/2026'} | NPSN: ${lembaga.profile?.npsn || 'K9998124'} | Akreditasi Peringkat: ${lembaga.profile?.accreditationRating || 'A'}</p>
             <div class="addr">Alamat: ${lembaga.profile?.address || 'Alamat Kantor Utama'} | Telp: ${lembaga.profile?.phone || 'Telepon'} | Email: ${lembaga.profile?.email || 'Email'}</div>
           </div>
@@ -488,9 +488,9 @@ ${penilaianContent}
             <div class="signature-grid">
               <div>
                 <p style="margin-bottom: 2px;">Mengetahui,</p>
-                <p style="font-weight: bold; margin-top: 0;">Pimpinan LKP ${lembaga.name}</p>
+                <p style="font-weight: bold; margin-top: 0;">Pimpinan Lembaga ${lembaga.name}</p>
                 <div style="height: 60px;"></div>
-                <p style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;">${lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur LKP'}</p>
+                <p style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;">${lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur Lembaga'}</p>
                 <p style="font-size: 9px; color: #64748b; margin-top: 0;">NIP/NIDN. Penyelenggara Kursus</p>
               </div>
               <div style="text-align: right;">
@@ -553,7 +553,7 @@ ${penilaianContent}
           
           <div class="letterhead">
             <div class="gov">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</div>
-            <h1>LEMBAGA KURSUS DAN PELATIHAN (LKP) ${lembaga.name.toUpperCase()}</h1>
+            <h1>LEMBAGA KURSUS DAN PELATIHAN ${lembaga.name.toUpperCase()}</h1>
             <p>Izin Operasional No: ${lembaga.profile?.skDisdik || '421.9/120-Disdik/2026'} | NPSN: ${lembaga.profile?.npsn || 'K9998124'} | Akreditasi Peringkat: ${lembaga.profile?.accreditationRating || 'A'}</p>
             <div class="addr">Alamat: ${lembaga.profile?.address || 'Alamat Kantor Utama'} | Telp: ${lembaga.profile?.phone || 'Telepon'} | Email: ${lembaga.profile?.email || 'Email'}</div>
           </div>
@@ -606,9 +606,9 @@ ${penilaianContent}
             <div class="signature-grid">
               <div>
                 <p style="margin-bottom: 2px;">Mengetahui & Mengesahkan,</p>
-                <p style="font-weight: bold; margin-top: 0;">Pimpinan LKP ${lembaga.name}</p>
+                <p style="font-weight: bold; margin-top: 0;">Pimpinan Lembaga ${lembaga.name}</p>
                 <div style="height: 60px;"></div>
-                <p style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;">${lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur LKP'}</p>
+                <p style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;">${lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur Lembaga'}</p>
                 <p style="font-size: 9px; color: #64748b; margin-top: 0;">NIP/NIDN. Penyelenggara Kursus tingkat Nasional</p>
               </div>
               <div style="text-align: right;">
@@ -836,7 +836,7 @@ ${penilaianContent}
           {/* Bottom attribution */}
           <div className="pt-4 mt-4 border-t border-neutral-200/60 text-[9px] text-neutral-400 font-mono flex items-center gap-1 font-semibold">
             <CheckCircle className="w-3 h-3 text-emerald-500" />
-            <span>Tersinkron dengan Database Raport LKP</span>
+            <span>Tersinkron dengan Database Raport Lembaga</span>
           </div>
         </div>
 
@@ -988,7 +988,7 @@ ${penilaianContent}
                     
                     {/* Decorative Watermark Seal */}
                     <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 pointer-events-none select-none text-[26px] font-black text-emerald-600/3 opacity-2 tracking-widest font-mono text-center uppercase leading-none">
-                      DOKUMEN RESMI LKP<br/>
+                      DOKUMEN RESMI Lembaga<br/>
                       8 STANDAR NASIONAL PENDIDIKAN<br/>
                       ✓ VALIDASI INTEGRITAS AI
                     </div>
@@ -1014,7 +1014,7 @@ ${penilaianContent}
                       <div className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         <span className="text-neutral-500">Berkas No:</span>
-                        <span className="font-bold text-slate-800">LKP/8-SNP/{activeTab.toUpperCase()}/{new Date().getFullYear()}</span>
+                        <span className="font-bold text-slate-800">Lembaga/8-SNP/{activeTab.toUpperCase()}/{new Date().getFullYear()}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="bg-teal-100 text-[#0d9488] font-black px-1.5 py-0.5 rounded uppercase font-sans text-[8px] tracking-wide">
@@ -1038,16 +1038,16 @@ ${penilaianContent}
                     <div className="border-t border-dashed border-neutral-200 pt-5 mt-8 grid grid-cols-2 gap-4 text-[9px] font-bold text-neutral-600 select-none">
                       <div>
                         <p className="m-0 text-neutral-400 font-mono font-bold uppercase tracking-wider">Mengesahkan,</p>
-                        <p className="font-bold text-neutral-700 mt-1">Pimpinan Lembaga LKP {lembaga.name}</p>
+                        <p className="font-bold text-neutral-700 mt-1">Pimpinan Lembaga {lembaga.name}</p>
                         {/* Seal Watermark Stamp */}
                         <div className="h-10 relative flex items-center">
                           <div className="absolute left-2 w-9 h-9 border border-emerald-600/30 rounded-full flex items-center justify-center text-[6px] text-emerald-600/45 font-black rotate-12 pointer-events-none uppercase leading-3 text-center">
-                            LKP {lembaga.name.substring(0, 5)}<br/>
+                            Lembaga {lembaga.name.substring(0, 5)}<br/>
                             ✓ SAH
                           </div>
                         </div>
                         <p className="font-extrabold text-slate-900 underline">
-                          {lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur LKP'}
+                          {lembaga.structure?.find(n => n.role.toLowerCase().includes('kepala') || n.role.toLowerCase().includes('pimpinan') || n.role.toLowerCase().includes('direktur'))?.name || 'Direktur Lembaga'}
                         </p>
                         <p className="text-[8px] text-neutral-400 mt-0.5 font-mono">ID Penyelenggara Nasional</p>
                       </div>
@@ -1060,7 +1060,7 @@ ${penilaianContent}
                         <p className="font-extrabold text-slate-900 underline">
                           {lembaga.teachers?.[0]?.name || 'Nama Instruktur Utama'}
                         </p>
-                        <p className="text-[8px] text-neutral-400 mt-0.5 font-mono">Specialist: {lembaga.teachers?.[0]?.specialty || 'Pengasar LKP'}</p>
+                        <p className="text-[8px] text-neutral-400 mt-0.5 font-mono">Specialist: {lembaga.teachers?.[0]?.specialty || 'Pengasar Lembaga'}</p>
                       </div>
                     </div>
 
@@ -1081,7 +1081,7 @@ ${penilaianContent}
                       <span>Input Nilai Integrasi Buku Raport</span>
                     </div>
                     <p className="text-[10px] text-neutral-550 leading-normal font-semibold">
-                      Gunakan formula penilaian di atas untuk memproses Nilai Akhir siswa dan mengirimkannya langsung ke Raport Siswa LKP.
+                      Gunakan formula penilaian di atas untuk memproses Nilai Akhir siswa dan mengirimkannya langsung ke Raport Siswa Lembaga.
                     </p>
                   </div>
 

@@ -25,7 +25,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
-    const url = window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id);
+    const url = window.location.origin + window.location.pathname + '?lembaga=' + encodeURIComponent(lembaga.id);
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -115,7 +115,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
     },
     {
       q: "Apakah kelulusan disertai sertifikat resmi?",
-      a: `Ya, setiap siswa yang menyelesaikan tugas & evaluasi mendapatkan Sertifikat Resmi berlisensi dari LKP ${lembaga.name} untuk mendaftar kerja.`
+      a: `Ya, setiap siswa yang menyelesaikan tugas & evaluasi mendapatkan Sertifikat Resmi berlisensi dari Lembaga ${lembaga.name} untuk mendaftar kerja.`
     },
     {
       q: "Bagaimana dengan kelengkapan modul & praktek?",
@@ -421,7 +421,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
         {/* Google Maps Map Card */}
         <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-3xs flex flex-col justify-between space-y-2 lg:col-span-1 md:col-span-2 lg:md:col-span-1">
           <div className="border-b border-neutral-100 pb-2">
-            <h3 className="font-extrabold text-xs uppercase font-mono tracking-wider text-emerald-700">Peta Lokasi LKP</h3>
+            <h3 className="font-extrabold text-xs uppercase font-mono tracking-wider text-emerald-700">Peta Lokasi Lembaga</h3>
           </div>
           
           <div className="flex-1 w-full min-h-[140px] relative rounded-xl overflow-hidden border border-neutral-200 shadow-4xs">
@@ -469,7 +469,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
         </div>
       </div>
 
-      {/* 3.2. Legalitas & Kredibilitas LKP - scroll-mt-20 */}
+      {/* 3.2. Legalitas & Kredibilitas Lembaga - scroll-mt-20 */}
       <div id="legalitas-section" className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-3xs space-y-4 scroll-mt-20">
         <div className="border-b border-neutral-100 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -758,7 +758,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
                 2
               </div>
               <div>
-                <p className="font-bold text-xs text-neutral-850">Konfirmasi Admin LKP</p>
+                <p className="font-bold text-xs text-neutral-850">Konfirmasi Admin Lembaga</p>
                 <p className="text-[10px] sm:text-[11px] text-neutral-500 leading-normal">Staf administrasi kami akan mengkonfirmasikan syarat pendaftaran dan kuota siswa baru Anda.</p>
               </div>
             </div>
@@ -769,7 +769,7 @@ export default function PublicLandingPage({ lembaga, onBack, onRegisterStudent }
               </div>
               <div>
                 <p className="font-bold text-xs text-neutral-850">Kelas Pembelajaran Kick-off</p>
-                <p className="text-[10px] sm:text-[11px] text-neutral-500 leading-normal">Ambil modul atau buku materi di kantor LKP dan kelas kursus belajar siap dimulai.</p>
+                <p className="text-[10px] sm:text-[11px] text-neutral-500 leading-normal">Ambil modul atau buku materi di kantor Lembaga dan kelas kursus belajar siap dimulai.</p>
               </div>
             </div>
           </div>

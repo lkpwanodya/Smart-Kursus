@@ -95,7 +95,7 @@ export async function loadInstitutions(): Promise<Institution[]> {
       console.error("Firestore logging finished. Attempting local fallback...", loggedErr);
     }
     // Fallback to offline local storage if Firebase is unreachable
-    const saved = localStorage.getItem('lkp_institutions');
+    const saved = localStorage.getItem('lembaga_institutions');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);

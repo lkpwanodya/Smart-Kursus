@@ -82,7 +82,7 @@ export default function AdminModules({
         {
           id: 'staff-1',
           name: 'Andi Saputra',
-          username: 'admin@wanodya.lkp',
+          username: 'admin@wanodya.lembaga',
           role: 'staf_admin' as const,
           active: true,
           password: 'password123'
@@ -90,7 +90,7 @@ export default function AdminModules({
         {
           id: 'staff-2',
           name: 'Siti Rahma, A.Md',
-          username: 'bendahara@wanodya.lkp',
+          username: 'bendahara@wanodya.lembaga',
           role: 'bendahara' as const,
           active: true,
           password: 'password123'
@@ -98,7 +98,7 @@ export default function AdminModules({
         ...(lembaga.teachers || []).map((t, idx) => ({
           id: `staff-teacher-${t.id}`,
           name: t.name,
-          username: `${t.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@wanodya.lkp`,
+          username: `${t.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@wanodya.lembaga`,
           role: 'pengajar' as const,
           active: true,
           password: 'password123'
@@ -150,12 +150,12 @@ export default function AdminModules({
     if (normalized.includes('direktur') || normalized.includes('pimpinan') || normalized.includes('kepala') || normalized.includes('owner') || normalized.includes('pemilik') || normalized.includes('ketua') || normalized.includes('ceo') || normalized.includes('rektor')) {
       return {
         rights: 'Mengambil keputusan-keputusan strategis kelembagaan secara mandiri, menyetujui rancangan alokasi anggaran pendapatan belanja (RAB), mewakili lembaga dalam penandatanganan kemitraan hukum eksternal, menetapkan sanksi staf, serta menandatangi sertifikat kelulusan ijazah siswa baru.',
-        duties: 'Memimpin implementasi operasional LKP secara harian menyeluruh, mengawasi keterlayanan administrasi sesuai standar dinas pendidikan setempat, menetapkan visi misi lembaga, merangkul kerja tim, serta memimpin forum musyawarah berkala.'
+        duties: 'Memimpin implementasi operasional Lembaga secara harian menyeluruh, mengawasi keterlayanan administrasi sesuai standar dinas pendidikan setempat, menetapkan visi misi lembaga, merangkul kerja tim, serta memimpin forum musyawarah berkala.'
       };
     }
     if (normalized.includes('sekretaris') || normalized.includes('admin') || normalized.includes('administrasi') || normalized.includes('tata usaha') || normalized.includes('tu') || normalized.includes('customer service') || normalized.includes('cs')) {
       return {
-        rights: 'Mendata pendaftaran dan berkas administratif calon siswa di portal pangkalan data, memberikan verifikasi awal kesesuaian berkas registrasi, menyusun alur pengarsipan berkas dinas, serta mengoperasikan akun resmi platform SaaS LKP.',
+        rights: 'Mendata pendaftaran dan berkas administratif calon siswa di portal pangkalan data, memberikan verifikasi awal kesesuaian berkas registrasi, menyusun alur pengarsipan berkas dinas, serta mengoperasikan akun resmi platform SaaS Lembaga.',
         duties: 'Mengelola aktivitas persuratan reguler lembaga, menyusun kelengkapan berkas fisik/digital kelembagaan, melayani pendaftaran konsultasi langsung tatap muka siswa baru, menjadwalkan agenda rapat pimpinan, serta merangkum notulen rapat evaluasi.'
       };
     }
@@ -174,7 +174,7 @@ export default function AdminModules({
     if (normalized.includes('humas') || normalized.includes('marketing') || normalized.includes('pemasaran') || normalized.includes('sales') || normalized.includes('promosi')) {
       return {
         rights: 'Menyusun naskah visual pamflet promosi program kursus di media sosial, merujuk target audiens pemasaran kelas baru, serta merintis MoU kemitraan awal dengan dinas/dunia industri.',
-        duties: 'Menyebarluaskan info pendaftaran LKP kepada target khalayak sekolah, mengelola tanggapan admin di kolom komentar publik, menyelenggarakan kegiatan open house, serta menjembatani proses penyaluran kerja alumni.'
+        duties: 'Menyebarluaskan info pendaftaran Lembaga kepada target khalayak sekolah, mengelola tanggapan admin di kolom komentar publik, menyelenggarakan kegiatan open house, serta menjembatani proses penyaluran kerja alumni.'
       };
     }
     if (normalized.includes('sarpras') || normalized.includes('logistik') || normalized.includes('sarana') || normalized.includes('umum') || normalized.includes('inventaris')) {
@@ -186,12 +186,12 @@ export default function AdminModules({
     if (normalized.includes('kurikulum') || normalized.includes('akademik')) {
       return {
         rights: 'Menilai kualitas modul silabus ajar yang diantarkan instruktur pengajar, merevisi pembobotan ujian tengah/akhir kursus, serta mendesain kriteria standar kelulusan kompetensi minimal.',
-        duties: 'Mengharmonisasikan kurikulum materi LKP dengan perkembangan dunia usaha industri terbaru, memetakan keselarasan kalender akademik gelombang belajar, serta menyelenggarakan penilaian ujian akhir berskala lokal.'
+        duties: 'Mengharmonisasikan kurikulum materi Lembaga dengan perkembangan dunia usaha industri terbaru, memetakan keselarasan kalender akademik gelombang belajar, serta menyelenggarakan penilaian ujian akhir berskala lokal.'
       };
     }
     return {
       rights: 'Mengakses sarana utilitas kantor pendukung pelaksanaan pekerjaan sehari-hari, mengajukan masukan kreatif penyempurnaan operasional, serta berkonsultasi mengenai hambatan teknis kerja bersama koordinator.',
-      duties: 'Menuntaskan target penugasan kerja operasional dari pimpinan dengan tertib presisi, menjaga keamanan kerahasiaan dokumen organisasi, serta merawat kekompakan tim kerja LKP.'
+      duties: 'Menuntaskan target penugasan kerja operasional dari pimpinan dengan tertib presisi, menjaga keamanan kerahasiaan dokumen organisasi, serta merawat kekompakan tim kerja Lembaga.'
     };
   };
 
@@ -245,7 +245,7 @@ export default function AdminModules({
         body: JSON.stringify({
           task: 'rights_duties',
           name: role,
-          context: name || 'Pengurus LKP'
+          context: name || 'Pengurus Lembaga'
         })
       });
 
@@ -532,7 +532,7 @@ export default function AdminModules({
       if (!skProfilNumberInput && lembaga.profile.skProfilNumber) {
         setSkProfilNumberInput(lembaga.profile.skProfilNumber);
       } else if (!skProfilNumberInput) {
-        setSkProfilNumberInput(`01/SK-DIR/LKP-WN/${new Date().getFullYear()}`);
+        setSkProfilNumberInput(`01/SK-DIR/Lembaga-WN/${new Date().getFullYear()}`);
       }
       
       if (!skProfilDateInput && lembaga.profile.skProfilDate) {
@@ -549,7 +549,7 @@ export default function AdminModules({
       if (!skStrukturNumberInput && lembaga.profile.skStrukturNumber) {
         setSkStrukturNumberInput(lembaga.profile.skStrukturNumber);
       } else if (!skStrukturNumberInput) {
-        setSkStrukturNumberInput(`02/SK-DIR/LKP-WN/${new Date().getFullYear()}`);
+        setSkStrukturNumberInput(`02/SK-DIR/Lembaga-WN/${new Date().getFullYear()}`);
       }
 
       if (!skStrukturDateInput && lembaga.profile.skStrukturDate) {
@@ -765,7 +765,7 @@ export default function AdminModules({
     const docLabels: Record<string, string> = {
       npsn: 'Nomor Pokok Sekolah Nasional (NPSN)',
       skDisdik: 'SK Izin Operasional Dinas Pendidikan',
-      accreditation: 'Sertifikat Akreditasi LKP',
+      accreditation: 'Sertifikat Akreditasi Lembaga',
       akta: 'Akta Pendirian Lembaga',
       npwp: 'NPWP Lembaga Kursus'
     };
@@ -873,7 +873,7 @@ export default function AdminModules({
       return;
     }
     if (file.size > 1.0 * 1024 * 1024) {
-      alert('Mohon maaf, ukuran berkas gambar banner melebihi batas maksimal 1 MB. Silakan optimalkan gambarnya terlebih dahulu agar pemuatan profil website LKP menjadi lebih cepat.');
+      alert('Mohon maaf, ukuran berkas gambar banner melebihi batas maksimal 1 MB. Silakan optimalkan gambarnya terlebih dahulu agar pemuatan profil website Lembaga menjadi lebih cepat.');
       return;
     }
 
@@ -1250,7 +1250,7 @@ export default function AdminModules({
     const formattedDuties = duties ? duties.split('\n').filter(Boolean).map(l => `  - ${l}`).join('\n') : '  - Menjaga integritas, visi & misi utama lembaga.\n  - Menyampaikan laporan bulanan kepada pimpinan tertinggi.';
 
     const pimpinan = getPimpinanInfo();
-    const lkpName = lembaga.name || 'Lembaga Pendidikan/Kursus';
+    const lembagaName = lembaga.name || 'Lembaga Pendidikan/Kursus';
     const address = lembaga.profile.address || 'Bekasi - Jawa Barat';
     const npsn = lembaga.profile.npsn ? `NPSN: ${lembaga.profile.npsn}` : 'NPSN: Belum Diisi';
     const skDisdik = lembaga.profile.skDisdik ? `Izin Operasional Disdik: ${lembaga.profile.skDisdik}` : 'Izin Operasional Dinas Pendidikan';
@@ -1259,17 +1259,17 @@ export default function AdminModules({
 
     if (type === 'pengangkatan') {
       return `KOP SURAT RESMI
-LEMBAGA KURSUS DAN PELATIHAN ${lkpName.toUpperCase()}
+LEMBAGA KURSUS DAN PELATIHAN ${lembagaName.toUpperCase()}
 ${npsn} | ${skDisdik}${accState}
 Alamat: ${address}${phone}
 
 ========================================================================
-SURAT KEPUTUSAN PIMPINAN LKP ${lkpName.toUpperCase()}
+SURAT KEPUTUSAN PIMPINAN Lembaga ${lembagaName.toUpperCase()}
 Nomor: ${number}
 
 TENTANG
 PENGANGKATAN PEGAWAI DALAM JABATAN STRUKTUR ORGANISASI
-PADA ${lkpName.toUpperCase()} TAHUN AJARAN ${new Date().getFullYear()}/${new Date().getFullYear() + 1}
+PADA ${lembagaName.toUpperCase()} TAHUN AJARAN ${new Date().getFullYear()}/${new Date().getFullYear() + 1}
 
 Menimbang:
 1. Bahwa demi kelancaran manajemen dan aktivitas administrasi serta koordinasi kerja yang tuntas, perlu ditetapkan kepengurusan fungsional lembaga.
@@ -1279,7 +1279,7 @@ Menimbang:
 Mengingat:
 1. Undang-Undang Republik Indonesia Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional.
 2. Peraturan Pemerintah No. 17 Tahun 2010 tentang Pengelolaan dan Penyelenggaraan Pendidikan.
-3. Anggaran Dasar & Anggaran Rumah Tangga (AD/ART) serta Rencana Mutu Pembelajaran LKP ${lkpName}.
+3. Anggaran Dasar & Anggaran Rumah Tangga (AD/ART) serta Rencana Mutu Pembelajaran Lembaga ${lembagaName}.
 
 MEMUTUSKAN:
 
@@ -1295,7 +1295,7 @@ KEEMPAT: Surat Keputusan ini berlaku sejak tanggal ditetapkan, dan apabila dikem
 Ditetapkan di: Bekasi
 Pada Tanggal: ${formattedDate}
 
-Pimpinan LKP ${lkpName},
+Pimpinan Lembaga ${lembagaName},
 
 
 
@@ -1303,7 +1303,7 @@ ${pimpinan.name}
 ${pimpinan.role}`;
     } else {
       return `KOP SURAT RESMI
-LEMBAGA Kursus dan Pelatihan ${lkpName.toUpperCase()}
+LEMBAGA Kursus dan Pelatihan ${lembagaName.toUpperCase()}
 ${npsn} | ${skDisdik}${accState}
 Alamat: ${address}${phone}
 
@@ -1313,7 +1313,7 @@ Nomor: ${number}
 
 TENTANG
 PENUGASAN KERJA DAN INSTRUKTUR TIM PEMBINA AKADEMIS
-PADA ${lkpName.toUpperCase()} TAHUN AJARAN ${new Date().getFullYear()}/${new Date().getFullYear() + 1}
+PADA ${lembagaName.toUpperCase()} TAHUN AJARAN ${new Date().getFullYear()}/${new Date().getFullYear() + 1}
 
 Menimbang:
 1. Bahwa untuk menunjang rasio interaksi belajar-mengajar, standarisasi pembelajaran instruksional yang relevan, dipandang perlu menerbitkan SK Penugasan Kerja pengajaran.
@@ -1322,7 +1322,7 @@ Menimbang:
 Mengingat:
 1. Undang-Undang Republik Indonesia Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional.
 2. Standar Nasional Kependidikan (SNP) terkait Guru dan Tenaga Kependidikan Lembaga Pendidikan Non-Formal.
-3. Silabus Kurikulum Kejuruan Terapan LKP ${lkpName} yang Berorientasi Kebutuhan Industri Kerja.
+3. Silabus Kurikulum Kejuruan Terapan Lembaga ${lembagaName} yang Berorientasi Kebutuhan Industri Kerja.
 
 MEMUTUSKAN:
 
@@ -1333,12 +1333,12 @@ KEDUA: Penugasan tersebut memberikan kewenangan pembelajaran kelas pendampingan 
 ${formattedRights}
 KETIGA: Mewajibkan yang bersangkutan untuk menyelesaikan tugas dan kewajiban mengajar harian secara profesional:
 ${formattedDuties}
-KEEMPAT: Keputusan ini berlaku mengikat dari tanggal ditetapkan, dikerjakan penuh amanah untuk kemandirian lulusan siswa LKP ${lkpName}.
+KEEMPAT: Keputusan ini berlaku mengikat dari tanggal ditetapkan, dikerjakan penuh amanah untuk kemandirian lulusan siswa Lembaga ${lembagaName}.
 
 Ditetapkan di: Bekasi
 Pada Tanggal: ${formattedDate}
 
-Pimpinan LKP ${lkpName},
+Pimpinan Lembaga ${lembagaName},
 
 
 
@@ -1458,7 +1458,7 @@ ${pimpinan.role}`;
     }
 
     const pimpinan = getPimpinanInfo();
-    const lkpName = lembaga.name || 'Lembaga Pendidikan/Kursus';
+    const lembagaName = lembaga.name || 'Lembaga Pendidikan/Kursus';
     const address = lembaga.profile.address || 'Bekasi - Jawa Barat';
     const npsn = lembaga.profile.npsn || 'Belum Terisi';
     const skDisdik = lembaga.profile.skDisdik || 'Belum Terisi';
@@ -1468,7 +1468,7 @@ ${pimpinan.role}`;
 
     try {
       const promptText = `Tuliskan Surat Keputusan Resmi (SK) untuk:
-Lembaga Kursus: ${lkpName}
+Lembaga Kursus: ${lembagaName}
 Alamat: ${address}
 NPSN: ${npsn}
 Izin Operasional Dinas Pendidikan: ${skDisdik}
@@ -1482,21 +1482,21 @@ Jabatan Pimpinan: ${pimpinan.role}
 
 Tipe SK: ${skGenType === 'pengangkatan' ? 'SK Pengangkatan Jabatan' : 'SK Penugasan Kerja/Mengajar'}
 Penerima Surat Keputusan:
-Nama Personel: ${activeName || 'Pengurus LKP'}
+Nama Personel: ${activeName || 'Pengurus Lembaga'}
 Jabatan/Role: ${activeRole || 'Staf Operasional'}
 Nomor SK: ${skGenNumber}
 Tanggal SK: ${skGenDate}
 Hak & Wewenang: ${activeRights || 'Melakukan tata kelola internal'}
 Tugas & Tanggung Jawab: ${activeDuties || 'Melaksanakan operasional harian'}
 
-Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lkpName}, TENTANG, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. Pastikan draft ini terlihat sangat profesional, presisi, proporsional dan siap cetak di kertas A4 hukum.`;
+Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lembagaName}, TENTANG, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. Pastikan draft ini terlihat sangat profesional, presisi, proporsional dan siap cetak di kertas A4 hukum.`;
 
       const res = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           task: 'sk',
-          name: lkpName,
+          name: lembagaName,
           context: promptText
         })
       });
@@ -1595,7 +1595,7 @@ Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal
   const handleAIGenerateProfileSK = async () => {
     setIsSkProfilGenerating(true);
     const pimpinan = getPimpinanInfo();
-    const lkpName = lembaga.name || 'Lembaga Pendidikan/Kursus';
+    const lembagaName = lembaga.name || 'Lembaga Pendidikan/Kursus';
     const address = lembaga.profile.address || 'DIY Yogyakarta';
     const npsn = lembaga.profile.npsn || 'Belum Terisi';
     const skDisdik = lembaga.profile.skDisdik || 'Belum Terisi';
@@ -1605,7 +1605,7 @@ Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal
     const mission = lembaga.profile.mission || 'Melatih kemandirian dan keterampilan praktis.';
 
     const promptText = `Tuliskan Surat Keputusan Resmi (SK) Penetapan Profil, Logo, dan Visi Misi Lembaga untuk:
-Lembaga Kursus: ${lkpName}
+Lembaga Kursus: ${lembagaName}
 Alamat: ${address}
 NPSN: ${npsn}
 Izin Operasional Dinas Pendidikan: ${skDisdik}
@@ -1620,7 +1620,7 @@ Visi Lembaga: ${vision}
 Misi Lembaga:
 ${mission}
 
-Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lkpName}, TENTANG PENETAPAN PROFIL, LOGO, DAN VISI MISI LEMBAGA, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. 
+Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lembagaName}, TENTANG PENETAPAN PROFIL, LOGO, DAN VISI MISI LEMBAGA, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. 
 Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara formal: LOGO RESMI LEMBAGA, VISI LEMBAGA, dan poin-poin MISI LEMBAGA yang baru ditetapkan, sehingga dokumen ini menjadi satu kesatuan draf hukum yang kokoh dan siap cetak di kertas A4 hukum.`;
 
     try {
@@ -1629,7 +1629,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           task: 'sk',
-          name: lkpName,
+          name: lembagaName,
           context: promptText
         })
       });
@@ -1826,7 +1826,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
             ${lembaga.name.toUpperCase()}
           </div>
           <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #1e293b; margin-top: 3px;">
-            LEMBAGA KURSUS DAN PELATIHAN (LKP)
+            LEMBAGA KURSUS DAN PELATIHAN
           </div>
           <div style="font-size: 10.5px; color: #334155; margin-top: 5px; line-height: 1.4;">
             ${lembaga.profile.address ? `Alamat: ${lembaga.profile.address}` : ''}
@@ -1877,7 +1877,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
   const handleAIGenerateStrukturSK = async () => {
     setIsSkStrukturGenerating(true);
     const pimpinan = getPimpinanInfo();
-    const lkpName = lembaga.name || 'Lembaga Pendidikan/Kursus';
+    const lembagaName = lembaga.name || 'Lembaga Pendidikan/Kursus';
     const address = lembaga.profile.address || 'DIY Yogyakarta';
     const npsn = lembaga.profile.npsn || 'Belum Terisi';
     const skDisdik = lembaga.profile.skDisdik || 'Belum Terisi';
@@ -1889,7 +1889,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
       : '(Belum ada data struktur organisasi. Mohon tambahkan pengurus di tab Struktur Organisasi terlebih dahulu)';
 
     const promptText = `Tuliskan Surat Keputusan Resmi (SK) Penetapan Struktur Organisasi dan Susunan Pengurus Lembaga untuk:
-Lembaga Kursus: ${lkpName}
+Lembaga Kursus: ${lembagaName}
 Alamat: ${address}
 NPSN: ${npsn}
 Izin Operasional Dinas Pendidikan: ${skDisdik}
@@ -1903,7 +1903,7 @@ Tanggal SK: ${skStrukturDateInput}
 Daftar Struktur Pengurus yang ditetapkan:
 ${structureListText}
 
-Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lkpName}, TENTANG PENETAPAN STRUKTUR ORGANISASI DAN SUSUNAN PENGURUS LEMBAGA, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. 
+Tuliskan dalam gaya bahasa hukum (legal draft) Indonesia asli yang sangat formal, rapi, memuat bagian KOP SURAT resmi untuk lembaga ${lembagaName}, TENTANG PENETAPAN STRUKTUR ORGANISASI DAN SUSUNAN PENGURUS LEMBAGA, MENIMBANG, MENGINGAT, MEMUTUSKAN, MENETAPKAN (KESATU, KEDUA, KETIGA, KEEMPAT) dan penutup tanda tangan oleh ${pimpinan.name} sebagai ${pimpinan.role}. 
 Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara formal tabel atau daftar Susunan Pengurus yang baru ditetapkan beserta uraian tugas pokok (Tupoksi) mereka secara komprehensif, sehingga dokumen ini menjadi satu kesatuan draf hukum yang kokoh dan siap cetak di kertas A4 hukum.`;
 
     try {
@@ -1912,7 +1912,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           task: 'sk',
-          name: lkpName,
+          name: lembagaName,
           context: promptText
         })
       });
@@ -2109,7 +2109,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
             ${lembaga.name.toUpperCase()}
           </div>
           <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #1e293b; margin-top: 3px;">
-            LEMBAGA KURSUS DAN PELATIHAN (LKP)
+            LEMBAGA KURSUS DAN PELATIHAN
           </div>
           <div style="font-size: 10.5px; color: #334155; margin-top: 5px; line-height: 1.4;">
             ${lembaga.profile.address ? `Alamat: ${lembaga.profile.address}` : ''}
@@ -2326,7 +2326,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
             ${lembaga.name.toUpperCase()}
           </div>
           <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: #1e293b; margin-top: 3px;">
-            LEMBAGA KURSUS DAN PELATIHAN (LKP)
+            LEMBAGA KURSUS DAN PELATIHAN
           </div>
           <div style="font-size: 10.5px; color: #334155; margin-top: 5px; line-height: 1.4;">
             ${lembaga.profile.address ? `Alamat: ${lembaga.profile.address}` : ''}
@@ -2972,7 +2972,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
         <div style="margin-bottom: 15px; font-size: 11px;">
           <strong style="text-transform: uppercase; color: #64748b; font-weight: 700; font-size: 9px; display: block; margin-bottom: 2px; letter-spacing: 0.5px;">Atasan Struktural</strong>
           <p style="margin: 0; color: #334155; font-weight: 600;">
-            ${node.parentId ? (lembaga.structure.find(p => p.id === node.parentId) ? `${lembaga.structure.find(p => p.id === node.parentId)?.role} (${lembaga.structure.find(p => p.id === node.parentId)?.name})` : 'Atasan Struktural') : 'Pimpinan Tertinggi LKP (Tanpa Atasan)'}
+            ${node.parentId ? (lembaga.structure.find(p => p.id === node.parentId) ? `${lembaga.structure.find(p => p.id === node.parentId)?.role} (${lembaga.structure.find(p => p.id === node.parentId)?.name})` : 'Atasan Struktural') : 'Pimpinan Tertinggi Lembaga (Tanpa Atasan)'}
           </p>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 11px;">
@@ -3126,7 +3126,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
           
           <div class="title-section">
             <h2>Bagan Struktur Organisasi & Tata Kelola Jabatan</h2>
-            <p>Sesuai Standar Kompetensi Administrasi Manajemen Pendidikan Nonformal - LKP Indonesia - Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}</p>
+            <p>Sesuai Standar Kompetensi Administrasi Manajemen Pendidikan Nonformal - Lembaga Indonesia - Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}</p>
           </div>
           
           <!-- BAGIAN 1: BAGAN VISUAL -->
@@ -3179,7 +3179,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
     if (!file) return;
 
     if (file.size > 1.0 * 1024 * 1024) {
-      alert('Mohon maaf, ukuran berkas cadangan (JSON) yang Anda pilih melebihi batas maksimal 1 MB. Pastikan Anda memilih berkas cadangan LKP yang benar dan berukuran kecil.');
+      alert('Mohon maaf, ukuran berkas cadangan (JSON) yang Anda pilih melebihi batas maksimal 1 MB. Pastikan Anda memilih berkas cadangan Lembaga yang benar dan berukuran kecil.');
       return;
     }
 
@@ -3216,7 +3216,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
         <div className="md:col-span-3 bg-white p-4 rounded-2xl border border-neutral-100 shadow-sm space-y-4 h-fit">
           <div className="border-b border-neutral-100 pb-2 mb-2">
             <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider px-1">Menu Administrasi</h3>
-            <p className="text-[10px] text-neutral-450 px-1 mt-0.5">Kelola data dan kelengkapan LKP</p>
+            <p className="text-[10px] text-neutral-450 px-1 mt-0.5">Kelola data dan kelengkapan Lembaga</p>
           </div>
           {[
             {
@@ -3301,7 +3301,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
           const fAQList = lembaga.profile.faqs || [
             { q: "Apakah pemula tanpa dasar keahlian bisa ikut?", a: "Tentu saja! Materi pembelajaran di kursus ini disusun secara sistematis mulai dari nol (basic) hingga mahir, dengan bimbingan penuh dari instruktur pendamping." },
             { q: "Bagaimana penentuan jadwal pelatihannya?", a: "Jadwal belajar sangat fleksibel dan diistirahatkan merata. Anda bisa berdiskusi langsung dengan instruktur setelah formulir pendaftaran terverifikasi." },
-            { q: "Apakah kelulusan disertai sertifikat resmi?", a: `Ya, setiap siswa yang menyelesaikan tugas & evaluasi mendapatkan Sertifikat Resmi berlisensi dari LKP ${lembaga.name} untuk mendaftar kerja.` },
+            { q: "Apakah kelulusan disertai sertifikat resmi?", a: `Ya, setiap siswa yang menyelesaikan tugas & evaluasi mendapatkan Sertifikat Resmi berlisensi dari Lembaga ${lembaga.name} untuk mendaftar kerja.` },
             { q: "Bagaimana dengan kelengkapan modul & praktek?", a: "Seluruh modul materi, alat peraga praktek, serta akses penuh laboratorium dan AC sudah termasuk tanpa ada biaya tambahan/biaya tersembunyi." }
           ];
 
@@ -3395,7 +3395,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
               <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-neutral-100 pb-4 gap-2">
                 <div>
                   <h3 className="text-lg font-black text-neutral-905 font-display uppercase tracking-tight">⚙️ Pengaturan Website & Landing Page</h3>
-                  <p className="text-xs text-neutral-500">Sesuaikan seluruh teks, visi-misi, koordinat peta Google Maps, legalitas akreditasi, keunggulan, dan FAQ LKP Anda.</p>
+                  <p className="text-xs text-neutral-500">Sesuaikan seluruh teks, visi-misi, koordinat peta Google Maps, legalitas akreditasi, keunggulan, dan FAQ Lembaga Anda.</p>
                 </div>
                 <div className="bg-emerald-50 text-emerald-800 border border-emerald-150 px-2.5 py-1 rounded-xl text-xs font-bold font-mono w-fit">
                   Live View Sync
@@ -3409,16 +3409,16 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                     Tautan Web Lembaga Anda
                   </span>
                   <p className="text-xs font-bold text-neutral-800 select-all font-mono break-all mt-1">
-                    {window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id)}
+                    {window.location.origin + window.location.pathname + '?lembaga=' + encodeURIComponent(lembaga.id)}
                   </p>
                   <p className="text-[11px] text-neutral-500">
-                    Gunakan tautan khusus di atas agar pengunjung/calon siswa yang mengklik link ini langsung diarahkan masuk ke halaman profil/pendaftaran LKP Anda secara instan.
+                    Gunakan tautan khusus di atas agar pengunjung/calon siswa yang mengklik link ini langsung diarahkan masuk ke halaman profil/pendaftaran Lembaga Anda secara instan.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    const url = window.location.origin + window.location.pathname + '?lkp=' + encodeURIComponent(lembaga.id);
+                    const url = window.location.origin + window.location.pathname + '?lembaga=' + encodeURIComponent(lembaga.id);
                     navigator.clipboard.writeText(url).then(() => {
                       setCopiedUrl(true);
                       setTimeout(() => setCopiedUrl(false), 2000);
@@ -3436,7 +3436,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                   { id: 'profil_utama', label: '1. Profil & Visi Misi' },
                   { id: 'sk_lembaga', label: '2. SK Lembaga' },
                   { id: 'legalitas', label: '3. Legalitas & Izin' },
-                  { id: 'keunggulan', label: '4. Keunggulan LKP' },
+                  { id: 'keunggulan', label: '4. Keunggulan Lembaga' },
                   { id: 'faq', label: '5. Tanya Jawab (FAQ)' }
                 ].map((tab) => (
                   <button
@@ -3458,7 +3458,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-fade-in text-left">
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Nama Lembaga Kursus (LKP)</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Nama Lembaga Kursus</label>
                       <input 
                         type="text" 
                         value={lembaga.name}
@@ -3467,7 +3467,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Telepon Pengelola LKP</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Telepon Pengelola Lembaga</label>
                       <input 
                         type="text" 
                         value={lembaga.profile.phone}
@@ -3477,7 +3477,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Email Publik LKP</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Email Publik Lembaga</label>
                       <input 
                         type="email" 
                         value={lembaga.profile.email || ''}
@@ -3505,7 +3505,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                         value={lembaga.profile.vision}
                         onChange={(e) => saveLembaga({ profile: { ...lembaga.profile, vision: e.target.value } })}
                         className="w-full text-xs font-medium border border-neutral-200 rounded-xl p-3 bg-neutral-50 focus:bg-white focus:outline-emerald-600 transition-colors leading-relaxed" 
-                        placeholder="Tulis visi utama LKP Anda di sini..."
+                        placeholder="Tulis visi utama Lembaga Anda di sini..."
                       />
                     </div>
                     <div>
@@ -3528,7 +3528,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                         value={lembaga.profile.mapQuery || ''}
                         onChange={(e) => saveLembaga({ profile: { ...lembaga.profile, mapQuery: e.target.value } })}
                         className="w-full text-xs border border-neutral-200 rounded-xl p-3 bg-neutral-50 focus:bg-white focus:outline-emerald-600 transition-colors" 
-                        placeholder="Contoh nama LKP atau koordinat peta: LKP Utama Yogyakarta"
+                        placeholder="Contoh nama Lembaga atau koordinat peta: Lembaga Utama Yogyakarta"
                       />
                     </div>
 
@@ -3613,7 +3613,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       
                       {/* Logo Presets Selection */}
                       <div className="mt-2.5">
-                        <span className="text-[9px] font-extrabold uppercase text-neutral-400 block mb-1.5">Preset Logo Populer LKP:</span>
+                        <span className="text-[9px] font-extrabold uppercase text-neutral-400 block mb-1.5">Preset Logo Populer Lembaga:</span>
                         <div className="flex flex-wrap gap-1.5">
                           {[
                             { name: '🎓 Akademik', url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=120&auto=format&fit=crop&q=60' },
@@ -3640,7 +3640,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                               type="button"
                               onClick={() => {
                                 setDeleteConfirm({
-                                  label: 'Logo LKP',
+                                  label: 'Logo Lembaga',
                                   onConfirm: () => {
                                     saveLembaga({ profile: { ...lembaga.profile, logoUrl: '' } });
                                   }
@@ -3655,9 +3655,9 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       </div>
                     </div>
 
-                    {/* NEW: Latar Belakang Bar / Banner LKP Section */}
+                    {/* NEW: Latar Belakang Bar / Banner Lembaga Section */}
                     <div className="border-t border-neutral-100 pt-5 mt-5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Gambar Latar Belakang Bar / Banner LKP (Unggah / Pilih Preset)</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">Gambar Latar Belakang Bar / Banner Lembaga (Unggah / Pilih Preset)</label>
                       
                       {/* Drag and Drop Zone for Banner */}
                       <div 
@@ -3737,7 +3737,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
 
                       {/* Banner Presets Selection */}
                       <div className="mt-2.5">
-                        <span className="text-[9px] font-extrabold uppercase text-neutral-400 block mb-1.5">Preset Background Populer LKP:</span>
+                        <span className="text-[9px] font-extrabold uppercase text-neutral-400 block mb-1.5">Preset Background Populer Lembaga:</span>
                         <div className="flex flex-wrap gap-1.5">
                           {[
                             { name: '🏫 Kelas Modern', url: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1000&auto=format&fit=crop&q=80' },
@@ -3764,7 +3764,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                               type="button"
                               onClick={() => {
                                 setDeleteConfirm({
-                                  label: 'Gambar Latar Belakang / Banner LKP',
+                                  label: 'Gambar Latar Belakang / Banner Lembaga',
                                   onConfirm: () => {
                                     saveLembaga({ profile: { ...lembaga.profile, bannerUrl: '' } });
                                   }
@@ -3819,7 +3819,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                             <BookOpen className="w-3.5 h-3.5 text-indigo-600" /> Surat Keputusan (SK) Lembaga
                           </span>
                           <h4 className="text-sm font-bold text-neutral-800">SK Penetapan Profil, Logo & Visi Misi</h4>
-                          <p className="text-xs text-neutral-500 mt-1">Dokumen legalitas formal yang mengesahkan identitas, logo, serta visi-misi perjuangan LKP Anda.</p>
+                          <p className="text-xs text-neutral-500 mt-1">Dokumen legalitas formal yang mengesahkan identitas, logo, serta visi-misi perjuangan Lembaga Anda.</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {skProfilDraftText ? (
@@ -3845,7 +3845,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                               type="text"
                               value={skProfilNumberInput}
                               onChange={(e) => setSkProfilNumberInput(e.target.value)}
-                              placeholder="Contoh: 01/SK-DIR/LKP-WN/2026"
+                              placeholder="Contoh: 01/SK-DIR/Lembaga-WN/2026"
                               className="w-full text-xs p-3 border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:outline-indigo-600 font-mono"
                             />
                           </div>
@@ -3968,7 +3968,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                             <Users className="w-3.5 h-3.5 text-indigo-600" /> Surat Keputusan (SK) Lembaga
                           </span>
                           <h4 className="text-sm font-bold text-neutral-800">SK Penetapan Struktur Organisasi & Susunan Pengurus</h4>
-                          <p className="text-xs text-neutral-500 mt-1">Dokumen legalitas formal yang menetapkan bagan pengurus, penanggung jawab, serta pembagian tugas kerja LKP.</p>
+                          <p className="text-xs text-neutral-500 mt-1">Dokumen legalitas formal yang menetapkan bagan pengurus, penanggung jawab, serta pembagian tugas kerja Lembaga.</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {skStrukturDraftText ? (
@@ -3994,7 +3994,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                               type="text"
                               value={skStrukturNumberInput}
                               onChange={(e) => setSkStrukturNumberInput(e.target.value)}
-                              placeholder="Contoh: 02/SK-DIR/LKP-WN/2026"
+                              placeholder="Contoh: 02/SK-DIR/Lembaga-WN/2026"
                               className="w-full text-xs p-3 border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus:outline-indigo-600 font-mono"
                             />
                           </div>
@@ -4027,7 +4027,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                                 </>
                               )}
                             </button>
-                            <p className="text-[9.5px] text-neutral-400 mt-2 text-center leading-relaxed">AI akan merumuskan SK Susunan Pengurus lengkap dengan daftar nama personil LKP saat ini.</p>
+                            <p className="text-[9.5px] text-neutral-400 mt-2 text-center leading-relaxed">AI akan merumuskan SK Susunan Pengurus lengkap dengan daftar nama personil Lembaga saat ini.</p>
                           </div>
                         </div>
 
@@ -4154,13 +4154,13 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                   },
                   {
                     id: 'akta' as const,
-                    label: 'AKTA Notaris Pendirian & Kemenkumham LKP',
+                    label: 'AKTA Notaris Pendirian & Kemenkumham Lembaga',
                     placeholder: 'Contoh: No. 12 Tanggal 20 Januari 2024 oleh Notaris Ahmad, S.H.',
                     numValue: lembaga.profile.aktaNo || '',
                     numKey: 'aktaNo' as const,
                     fileValue: lembaga.profile.aktaFile || '',
                     fileNameValue: lembaga.profile.aktaFileName || '',
-                    docTitle: 'Salinan Akta Pendirian LKP & SK Pengesahan Kemenkumham',
+                    docTitle: 'Salinan Akta Pendirian Lembaga & SK Pengesahan Kemenkumham',
                     icon: Building,
                     color: 'rose',
                   },
@@ -4172,7 +4172,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                     numKey: 'npwpNo' as const,
                     fileValue: lembaga.profile.npwpFile || '',
                     fileNameValue: lembaga.profile.npwpFileName || '',
-                    docTitle: 'Kartu Nomor Pokok Wajib Pajak (NPWP) Badan LKP',
+                    docTitle: 'Kartu Nomor Pokok Wajib Pajak (NPWP) Badan Lembaga',
                     icon: FileSpreadsheet,
                     color: 'cyan',
                   }
@@ -4182,7 +4182,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                   <div className="max-w-3xl space-y-5 animate-fade-in text-left">
                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-150 mb-4">
                       <p className="text-xs text-neutral-500 leading-relaxed font-semibold mb-1">
-                        Informasi di bawah ini muncul sebagai legalitas hukum terpercaya di bagian <strong>Legalitas LKP</strong> pada landing page publik. Masukkan nomor register resmi dan unggah dokumen bukti fisik Anda untuk validasi. Anda bisa langsung melakukan cetak atau pratinjau dokumen dalam format popup sertifikat resmi.
+                        Informasi di bawah ini muncul sebagai legalitas hukum terpercaya di bagian <strong>Legalitas Lembaga</strong> pada landing page publik. Masukkan nomor register resmi dan unggah dokumen bukti fisik Anda untuk validasi. Anda bisa langsung melakukan cetak atau pratinjau dokumen dalam format popup sertifikat resmi.
                       </p>
                     </div>
 
@@ -4302,12 +4302,12 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                 );
               })()}
 
-              {/* TAB 3: KEUNGGULAN LKP (HIGHLIGHTS) */}
+              {/* TAB 3: KEUNGGULAN Lembaga (HIGHLIGHTS) */}
               {activeProfileTab === 'keunggulan' && (
                 <div className="space-y-4 animate-fade-in text-left">
                   <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-150 mb-2">
                     <p className="text-xs text-neutral-500 leading-relaxed font-semibold">
-                      Ubah 4 poin keunggulan utama "Mengapa Memilih LKP Kami?" untuk disesuaikan dengan bidang kursus Anda (komputer, busana, kuliner, dsb).
+                      Ubah 4 poin keunggulan utama "Mengapa Memilih Lembaga Kami?" untuk disesuaikan dengan bidang kursus Anda (komputer, busana, kuliner, dsb).
                     </p>
                   </div>
 
@@ -4433,7 +4433,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       </div>
                       <div>
                         <span className="text-[11px] uppercase font-mono tracking-wider text-indigo-900 font-extrabold block">🤖 ASISTEN PENULIS FAQ AI</span>
-                        <p className="text-[10px] text-neutral-500">Buat tanya-jawab berkualitas secara cepat disesuaikan dengan kurikulum LKP Anda.</p>
+                        <p className="text-[10px] text-neutral-500">Buat tanya-jawab berkualitas secara cepat disesuaikan dengan kurikulum Lembaga Anda.</p>
                       </div>
                     </div>
 
@@ -5648,7 +5648,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                 <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
                   <span>Pemenuhan 8 SNP Akreditasi</span>
                   <span className="bg-emerald-50 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-100 uppercase tracking-wider">
-                    Akreditasi LKP
+                    Akreditasi Lembaga
                   </span>
                 </h3>
                 <p className="text-xs text-neutral-500">Kelola berkas instrumen akreditasi berdasarkan 8 Standar Nasional Pendidikan Indonesia.</p>
@@ -5680,7 +5680,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                         ...lembaga,
                         snpStandards: dynamicSnp
                       });
-                      alert("Mode Auto-Sinkronisasi diaktifkan! Skor dihitung dari data rill LKP Anda.");
+                      alert("Mode Auto-Sinkronisasi diaktifkan! Skor dihitung dari data rill Lembaga Anda.");
                     }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       snpAutoSync
@@ -5945,7 +5945,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                   <span>Kredensial & Supervisi Hak Akses</span>
                 </h3>
                 <p className="text-xs text-neutral-500">
-                  Pusat kendali akun operasional. Seluruh aktivitas pembuatan, pemblokiran, dan perubahan sandi berada di bawah pengawasan langsung Pimpinan LKP.
+                  Pusat kendali akun operasional. Seluruh aktivitas pembuatan, pemblokiran, dan perubahan sandi berada di bawah pengawasan langsung Pimpinan Lembaga.
                 </p>
               </div>
               <div className="flex items-center gap-1.5 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-200">
@@ -5978,7 +5978,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                     <span>Kredensial Utama Pimpinan</span>
                   </h4>
                   <p className="text-[10px] text-neutral-450 mt-1">
-                    Gunakan email & kata sandi ini untuk mengakses seluruh dashboard manajemen, finansial, dan data sensitif LKP.
+                    Gunakan email & kata sandi ini untuk mengakses seluruh dashboard manajemen, finansial, dan data sensitif Lembaga.
                   </p>
                 </div>
 
@@ -6102,7 +6102,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                                       : 'bg-indigo-50 text-indigo-800 border-indigo-200'
                                 }`}>
                                   {staff.role === 'staf_admin' && '💼 Staf Admin'}
-                                  {staff.role === 'bendahara' && '💰 Bendahara LKP'}
+                                  {staff.role === 'bendahara' && '💰 Bendahara Lembaga'}
                                   {staff.role === 'pengajar' && '🎓 Pengajar'}
                                 </span>
                                 {!staff.active && (
@@ -6226,7 +6226,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
 
                 {/* FOOTER EXPLANATION OF SUPERVISION */}
                 <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-150 text-[11px] leading-relaxed text-neutral-600 space-y-1">
-                  <span className="font-extrabold text-neutral-800 block text-xs">🔔 Catatan Supervisi Pimpinan LKP:</span>
+                  <span className="font-extrabold text-neutral-800 block text-xs">🔔 Catatan Supervisi Pimpinan Lembaga:</span>
                   <p>
                     Sebagai Pimpinan, Anda memiliki wewenang hukum mutlak atas seluruh fungsionalitas aplikasi. Jika personil admin atau pengajar melakukan pelanggaran atau mutasi kerja, Anda dapat <strong>membekukan login mereka secara real-time</strong>.
                   </p>
@@ -6270,13 +6270,13 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       const updated = [...(lembaga.staffCredentials || []), newStaff];
                       saveLembaga({ staffCredentials: updated });
                       setShowAddStaffModal(false);
-                      const roleLabel = newStaffRole === 'staf_admin' ? 'Staf Admin' : newStaffRole === 'bendahara' ? 'Bendahara LKP' : 'Pengajar';
+                      const roleLabel = newStaffRole === 'staf_admin' ? 'Staf Admin' : newStaffRole === 'bendahara' ? 'Bendahara Lembaga' : 'Pengajar';
                       alert(`Kredensial baru untuk ${newStaffName} (${roleLabel}) berhasil didaftarkan secara aman!`);
                     }} 
                     className="p-6 space-y-4"
                   >
                     <div>
-                      <label className="text-xs font-bold text-neutral-600 block mb-1">Nama Personil LKP</label>
+                      <label className="text-xs font-bold text-neutral-600 block mb-1">Nama Personil Lembaga</label>
                       <input 
                         type="text" 
                         required
@@ -6292,7 +6292,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                       <input 
                         type="email" 
                         required
-                        placeholder="Misal: budi@wanodya.lkp"
+                        placeholder="Misal: budi@wanodya.lembaga"
                         value={newStaffUsername} 
                         onChange={(e) => setNewStaffUsername(e.target.value)}
                         className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-neutral-50 focus:bg-white focus:outline-none font-mono"
@@ -6307,7 +6307,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                         className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-neutral-50 focus:bg-white focus:outline-none"
                       >
                         <option value="staf_admin">💼 Staf Administrasi / Admin (Proteksi Finansial)</option>
-                        <option value="bendahara">💰 Bendahara LKP (Pengelola Finansial & Kas Buku)</option>
+                        <option value="bendahara">💰 Bendahara Lembaga (Pengelola Finansial & Kas Buku)</option>
                         <option value="pengajar">🎓 Pengajar / Instruktur (Fokus KBM & Raport)</option>
                       </select>
                     </div>
@@ -8714,7 +8714,7 @@ Tambahkan juga bagian LAMPIRAN SURAT KEPUTUSAN di bawahnya yang merinci secara f
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px] font-semibold leading-relaxed">
                       <div><span className="text-neutral-400">Nama Dokumen :</span> <span className="text-neutral-850 font-bold">{previewDoc.title}</span></div>
                       <div><span className="text-neutral-400">Nomor Registrasi :</span> <span className="text-neutral-850 font-mono font-bold">{previewDoc.number || 'Belum Diisi'}</span></div>
-                      <div className="col-span-2"><span className="text-neutral-400">Peringatan Akreditasi :</span> <span className="text-neutral-500 font-medium font-sans">Buku registrasi dan arsip fisik wajib disimpan di lemari administrasi lembaga LKP untuk kebutuhan verifikasi akreditasi lapangan BAN-PDM.</span></div>
+                      <div className="col-span-2"><span className="text-neutral-400">Peringatan Akreditasi :</span> <span className="text-neutral-500 font-medium font-sans">Buku registrasi dan arsip fisik wajib disimpan di lemari administrasi lembaga Lembaga untuk kebutuhan verifikasi akreditasi lapangan BAN-PDM.</span></div>
                     </div>
                   </div>
                 </div>

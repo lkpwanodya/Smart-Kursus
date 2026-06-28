@@ -25,9 +25,9 @@ import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 
 export default function App() {
   // Public visitor state for seeing a single institution landing website, initialized from URL
-  const [selectedPublicLkpId, setSelectedPublicLkpId] = useState<string | null>(() => {
+  const [selectedPublicLembagaId, setSelectedPublicLembagaId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('lkp');
+    return params.get('lembaga');
   });
 
   // 1. Core database state initialized from Firestore with fallback
@@ -52,15 +52,15 @@ export default function App() {
         setInstitutions(data);
         prevInstitutionsRef.current = data;
 
-        // Cocokkan query param ?lkp=id-lembaga dengan data riil dari Firestore setelah data dimuat
+        // Cocokkan query param ?lembaga=id-lembaga dengan data riil dari Firestore setelah data dimuat
         const params = new URLSearchParams(window.location.search);
-        const lkpParam = params.get('lkp');
-        if (lkpParam) {
-          const found = data.find(i => i.id.toLowerCase() === lkpParam.toLowerCase());
+        const lembagaParam = params.get('lembaga');
+        if (lembagaParam) {
+          const found = data.find(i => i.id.toLowerCase() === lembagaParam.toLowerCase());
           if (found) {
-            setSelectedPublicLkpId(found.id);
+            setSelectedPublicLembagaId(found.id);
           } else {
-            setSelectedPublicLkpId(null);
+            setSelectedPublicLembagaId(null);
           }
         }
 
@@ -94,14 +94,14 @@ export default function App() {
   // Sync state ke URL secara real-time
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (selectedPublicLkpId) {
-      params.set('lkp', selectedPublicLkpId);
+    if (selectedPublicLembagaId) {
+      params.set('lembaga', selectedPublicLembagaId);
     } else {
-      params.delete('lkp');
+      params.delete('lembaga');
     }
     const newRelativePathQuery = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
     window.history.replaceState(null, '', newRelativePathQuery);
-  }, [selectedPublicLkpId]);
+  }, [selectedPublicLembagaId]);
 
   // Firebase database storage capacity state for superadmin (default simulation limit is 100 KB)
   const [storageLimitKb, setStorageLimitKb] = useState<number>(100);
@@ -142,7 +142,7 @@ export default function App() {
   const [activeAITab, setActiveAITab] = useState<'rpp' | 'lks' | 'teori' | 'praktek' | 'penilaian'>('rpp');
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
-  const [dismissedLicenseWarningLkpId, setDismissedLicenseWarningLkpId] = useState<string | null>(null);
+  const [dismissedLicenseWarningLembagaId, setDismissedLicenseWarningLembagaId] = useState<string | null>(null);
 
   // Accordion open/collapse group tracking
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -174,13 +174,16 @@ export default function App() {
   const [regIsGenerating, setRegIsGenerating] = useState(false);
   const [regGenStatus, setRegGenStatus] = useState('');
   const [regAgreeDisclaimer, setRegAgreeDisclaimer] = useState(false);
+  const [showDisclaimerPopup, setShowDisclaimerPopup] = useState(false);
+  const [showUserGuidePopup, setShowUserGuidePopup] = useState(false);
+  const [guideActiveTab, setGuideActiveTab] = useState('peran');
 
   // 6. Superadmin and creation form states
-  const [superNewLkpName, setSuperNewLkpName] = useState('');
-  const [superNewLkpEmail, setSuperNewLkpEmail] = useState('');
-  const [superNewLkpPass, setSuperNewLkpPass] = useState('');
-  const [superNewLkpConfirm, setSuperNewLkpConfirm] = useState('');
-  const [superNewLkpDuration, setSuperNewLkpDuration] = useState('2026-12-31');
+  const [superNewLembagaName, setSuperNewLembagaName] = useState('');
+  const [superNewLembagaEmail, setSuperNewLembagaEmail] = useState('');
+  const [superNewLembagaPass, setSuperNewLembagaPass] = useState('');
+  const [superNewLembagaConfirm, setSuperNewLembagaConfirm] = useState('');
+  const [superNewLembagaDuration, setSuperNewLembagaDuration] = useState('2026-12-31');
 
   // Student routing helpers
   const [navigationStudentId, setNavigationStudentId] = useState('');
@@ -205,9 +208,9 @@ export default function App() {
   // Forgot Password feature states
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotVerificationAnswer, setForgotVerificationAnswer] = useState(''); // NPSN or LKP Name
+  const [forgotVerificationAnswer, setForgotVerificationAnswer] = useState(''); // NPSN or Lembaga Name
   const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1: Verify Account, 2: Reset/View Pass
-  const [forgotMatchedLkp, setForgotMatchedLkp] = useState<Institution | null>(null);
+  const [forgotMatchedLembaga, setForgotMatchedLembaga] = useState<Institution | null>(null);
   const [forgotNewPass, setForgotNewPass] = useState('');
   const [forgotNewPassConfirm, setForgotNewPassConfirm] = useState('');
   const [forgotError, setForgotError] = useState('');
@@ -229,15 +232,15 @@ export default function App() {
   // Synchronize profile form states when modal opens
   useEffect(() => {
     if (showProfileModal && currentUser) {
-      const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
+      const activeLembaga = institutions.find(inst => inst.id === currentUser?.id);
       if (currentUser.role === 'superadmin') {
         setProfileName('Superadmin');
         setProfileEmail(currentUser.staffUsername || 'superadmin');
-      } else if (currentUser.subRole === 'pimpinan' && activeLkp) {
-        setProfileName(activeLkp.name);
-        setProfileEmail(activeLkp.email);
-      } else if (activeLkp) {
-        const staff = activeLkp.staffCredentials?.find(
+      } else if (currentUser.subRole === 'pimpinan' && activeLembaga) {
+        setProfileName(activeLembaga.name);
+        setProfileEmail(activeLembaga.email);
+      } else if (activeLembaga) {
+        const staff = activeLembaga.staffCredentials?.find(
           s => s.role === currentUser.subRole && s.username.toLowerCase() === currentUser.staffUsername?.toLowerCase()
         );
         if (staff) {
@@ -285,19 +288,19 @@ export default function App() {
           return;
         }
       } else {
-        const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
-        if (!activeLkp) {
+        const activeLembaga = institutions.find(inst => inst.id === currentUser?.id);
+        if (!activeLembaga) {
           setProfileError('⚠️ Gagal menemukan data lembaga!');
           return;
         }
 
         if (currentUser?.subRole === 'pimpinan') {
-          if (profileOldPassword !== activeLkp.password) {
+          if (profileOldPassword !== activeLembaga.password) {
             setProfileError('⚠️ Kata sandi lama Pimpinan salah!');
             return;
           }
         } else {
-          const staffList = activeLkp.staffCredentials || [];
+          const staffList = activeLembaga.staffCredentials || [];
           const targetStaff = staffList.find(
             s => s.role === currentUser?.subRole && s.username.toLowerCase() === currentUser?.staffUsername?.toLowerCase()
           );
@@ -334,8 +337,8 @@ export default function App() {
       return;
     }
 
-    const activeLkp = institutions.find(inst => inst.id === currentUser?.id);
-    if (!activeLkp) {
+    const activeLembaga = institutions.find(inst => inst.id === currentUser?.id);
+    if (!activeLembaga) {
       setProfileError('⚠️ Gagal menemukan data lembaga!');
       return;
     }
@@ -343,23 +346,23 @@ export default function App() {
     if (currentUser?.subRole === 'pimpinan') {
       const emailLower = profileEmail.toLowerCase();
       const isEmailTaken = institutions.some(
-        inst => inst.id !== activeLkp.id && inst.email.toLowerCase() === emailLower
+        inst => inst.id !== activeLembaga.id && inst.email.toLowerCase() === emailLower
       );
       if (isEmailTaken || emailLower === 'superadmin') {
         setProfileError('⚠️ Email sudah digunakan oleh lembaga lain atau dilindungi!');
         return;
       }
 
-      const updatedLkp: Institution = {
-        ...activeLkp,
+      const updatedLembaga: Institution = {
+        ...activeLembaga,
         name: profileName,
         email: emailLower,
       };
       if (profilePassword) {
-        updatedLkp.password = profilePassword;
+        updatedLembaga.password = profilePassword;
       }
 
-      updateCurrentLkp(updatedLkp);
+      updateCurrentLembaga(updatedLembaga);
       
       setCurrentUser({
         ...currentUser,
@@ -371,7 +374,7 @@ export default function App() {
       setProfilePassword('');
       setProfileConfirmPassword('');
     } else {
-      const staffList = activeLkp.staffCredentials || [];
+      const staffList = activeLembaga.staffCredentials || [];
       const staffMemberIndex = staffList.findIndex(
         s => s.role === currentUser?.subRole && s.username.toLowerCase() === currentUser?.staffUsername?.toLowerCase()
       );
@@ -382,14 +385,14 @@ export default function App() {
       }
 
       const userLower = profileEmail.toLowerCase();
-      const isUsernameTakenByLkp = institutions.some(
+      const isUsernameTakenByLembaga = institutions.some(
         inst => inst.email.toLowerCase() === userLower
       );
       let isUsernameTakenByStaff = false;
       for (const inst of institutions) {
         if (inst.staffCredentials) {
           const found = inst.staffCredentials.find(
-            s => s.username.toLowerCase() === userLower && (inst.id !== activeLkp.id || s.role !== currentUser?.subRole)
+            s => s.username.toLowerCase() === userLower && (inst.id !== activeLembaga.id || s.role !== currentUser?.subRole)
           );
           if (found) {
             isUsernameTakenByStaff = true;
@@ -398,7 +401,7 @@ export default function App() {
         }
       }
 
-      if (isUsernameTakenByLkp || isUsernameTakenByStaff || userLower === 'superadmin') {
+      if (isUsernameTakenByLembaga || isUsernameTakenByStaff || userLower === 'superadmin') {
         setProfileError('⚠️ Nama pengguna / email sudah digunakan!');
         return;
       }
@@ -414,8 +417,8 @@ export default function App() {
         updatedStaffList[staffMemberIndex].password = profilePassword;
       }
 
-      updateCurrentLkp({
-        ...activeLkp,
+      updateCurrentLembaga({
+        ...activeLembaga,
         staffCredentials: updatedStaffList
       });
 
@@ -587,7 +590,7 @@ export default function App() {
     if (loading) return; // Prevent overwriting during load
 
     // LocalStorage fallback
-    localStorage.setItem('lkp_institutions', JSON.stringify(institutions));
+    localStorage.setItem('lembaga_institutions', JSON.stringify(institutions));
 
     const prev = prevInstitutionsRef.current;
 
@@ -667,12 +670,12 @@ export default function App() {
       }
     } else {
       // Find institutional match
-      const matchingLkp = institutions.find(
+      const matchingLembaga = institutions.find(
         inst => inst.email.toLowerCase() === inputUser && inst.password === loginPassword
       );
 
       // Find staff match in any institution
-      let matchedStaffLkp: Institution | undefined = undefined;
+      let matchedStaffLembaga: Institution | undefined = undefined;
       let matchedStaffMember: any = undefined;
 
       for (const inst of institutions) {
@@ -681,33 +684,33 @@ export default function App() {
             s => s.username.toLowerCase() === inputUser && s.password === loginPassword
           );
           if (staff) {
-            matchedStaffLkp = inst;
+            matchedStaffLembaga = inst;
             matchedStaffMember = staff;
             break;
           }
         }
       }
 
-      if (matchingLkp) {
+      if (matchingLembaga) {
         setCurrentUser({ 
           role: 'lembaga', 
-          id: matchingLkp.id, 
+          id: matchingLembaga.id, 
           subRole: 'pimpinan',
           staffName: 'Pimpinan Lembaga Kursus',
-          staffUsername: matchingLkp.email
+          staffUsername: matchingLembaga.email
         });
         setLoginEmail('');
         setLoginPassword('');
         setActiveSidebar('dashboard');
         setShowLoginModal(false);
-      } else if (matchedStaffLkp && matchedStaffMember) {
+      } else if (matchedStaffLembaga && matchedStaffMember) {
         if (!matchedStaffMember.active) {
           setLoginError('⚠️ Akses ditangguhkan! Akun staff ini sedang dinonaktifkan oleh Pimpinan Lembaga Kursus.');
           return;
         }
         setCurrentUser({ 
           role: 'lembaga', 
-          id: matchedStaffLkp.id, 
+          id: matchedStaffLembaga.id, 
           subRole: matchedStaffMember.role,
           selectedTeacherId: matchedStaffMember.id.startsWith('staff-teacher-') 
             ? matchedStaffMember.id.replace('staff-teacher-', '') 
@@ -786,14 +789,14 @@ export default function App() {
 
     if (regEnableAI) {
       setRegIsGenerating(true);
-      setRegGenStatus('✨ Asisten AI sedang merancang kurikulum dan profil LKP Anda...');
+      setRegGenStatus('✨ Asisten AI sedang merancang kurikulum dan profil Lembaga Anda...');
       try {
         const skillSelected = regSkillField === 'Lainnya' ? regSkillCustom : regSkillField;
         const response = await fetch('/api/ai/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            task: 'lkp_generate',
+            task: 'lembaga_generate',
             name: regName,
             context: skillSelected || 'Umum'
           })
@@ -870,8 +873,8 @@ export default function App() {
       };
     });
 
-    const newLkp: Institution = {
-      id: 'lkp_' + Date.now(),
+    const newLembaga: Institution = {
+      id: 'lembaga_' + Date.now(),
       name: regName,
       email: regEmail,
       password: regPassword,
@@ -921,13 +924,13 @@ export default function App() {
       ]
     };
 
-    setInstitutions([...institutions, newLkp]);
+    setInstitutions([...institutions, newLembaga]);
     
     let successMsg = `🎉 Kursus "${regName}" berhasil terdaftar!`;
     if (regEnableAI && mappedPrograms.length > 0) {
       successMsg += `\n\n✨ Asisten AI juga telah menggenerasi 3 program studi (${mappedPrograms.map(p => p.name).join(', ')}), ${mappedFacilities.length} sarana prasarana utama, dan 2 instruktur pengajar fiktif berserta kredensial login mereka secara cerdas!`;
     }
-    successMsg += `\n\nSilakan login sekarang menggunakan email LKP Anda atau username staf Anda (misal: "pimpinan" dengan sandi "pimpinan123").`;
+    successMsg += `\n\nSilakan login sekarang menggunakan email Lembaga Anda atau username staf Anda (misal: "pimpinan" dengan sandi "pimpinan123").`;
     
     setRegSuccess(successMsg);
     
@@ -952,7 +955,7 @@ export default function App() {
     }
 
     if (email === 'superadmin') {
-      setForgotMatchedLkp({
+      setForgotMatchedLembaga({
         id: 'superadmin',
         name: 'Superadmin Pengawas',
         email: 'superadmin',
@@ -983,7 +986,7 @@ export default function App() {
       return;
     }
 
-    setForgotMatchedLkp(matched);
+    setForgotMatchedLembaga(matched);
     setForgotStep(2);
   };
 
@@ -993,14 +996,14 @@ export default function App() {
     setForgotError('');
     setForgotSuccess('');
 
-    if (!forgotMatchedLkp) return;
+    if (!forgotMatchedLembaga) return;
 
     // Challenge check using registered Phone, NPSN, or Name
     const chalAnswer = forgotVerificationAnswer.trim().replace(/[-\s()]/g, '');
     const checkAnswerRaw = forgotVerificationAnswer.trim().toLowerCase();
-    const officialPhone = (forgotMatchedLkp.profile?.phone || '').replace(/[-\s()]/g, '');
-    const officialNpsn = (forgotMatchedLkp.profile?.npsn || '').toLowerCase().trim();
-    const officialName = (forgotMatchedLkp.name || '').toLowerCase().trim();
+    const officialPhone = (forgotMatchedLembaga.profile?.phone || '').replace(/[-\s()]/g, '');
+    const officialNpsn = (forgotMatchedLembaga.profile?.npsn || '').toLowerCase().trim();
+    const officialName = (forgotMatchedLembaga.name || '').toLowerCase().trim();
 
     const matchesPhone = officialPhone && (chalAnswer === officialPhone || checkAnswerRaw === officialPhone);
     const matchesNpsn = officialNpsn && checkAnswerRaw === officialNpsn;
@@ -1022,26 +1025,26 @@ export default function App() {
         return;
       }
 
-      if (forgotMatchedLkp.id === 'superadmin') {
+      if (forgotMatchedLembaga.id === 'superadmin') {
         alert('ℹ️ Akun Pengawas (superadmin) dilindungi dan tidak dapat diganti kata sandinya di sandbox ini. Kata sandi tetap: superadmin123');
         setShowForgotModal(false);
         return;
       }
 
       const updated = institutions.map(inst => {
-        if (inst.id === forgotMatchedLkp.id) {
+        if (inst.id === forgotMatchedLembaga.id) {
           return { ...inst, password: forgotNewPass };
         }
         return inst;
       });
 
       setInstitutions(updated);
-      alert(`🎉 Kata sandi untuk Lembaga Kursus "${forgotMatchedLkp.name}" berhasil disetel ulang! Silakan masuk menggunakan kata sandi baru Anda.`);
+      alert(`🎉 Kata sandi untuk Lembaga Kursus "${forgotMatchedLembaga.name}" berhasil disetel ulang! Silakan masuk menggunakan kata sandi baru Anda.`);
       setShowForgotModal(false);
     } else {
       // Just expose current password and state it clearly
-      setForgotSuccess(`Sandi Anda ditemukan! Kata sandi saat ini: "${forgotMatchedLkp.password}"`);
-      alert(`🔑 Verifikasi Berhasil!\n\nKata sandi Lembaga Kursus "${forgotMatchedLkp.name}" saat ini adalah:\n👉 "${forgotMatchedLkp.password}" 👈\n\nAnda dapat menggunakannya sekarang atau mengisi formulir di bawah ini untuk menyetel ulang ke kata sandi baru.`);
+      setForgotSuccess(`Sandi Anda ditemukan! Kata sandi saat ini: "${forgotMatchedLembaga.password}"`);
+      alert(`🔑 Verifikasi Berhasil!\n\nKata sandi Lembaga Kursus "${forgotMatchedLembaga.name}" saat ini adalah:\n👉 "${forgotMatchedLembaga.password}" 👈\n\nAnda dapat menggunakannya sekarang atau mengisi formulir di bawah ini untuk menyetel ulang ke kata sandi baru.`);
     }
   };
 
@@ -1052,33 +1055,33 @@ export default function App() {
   // ----------------------------------------------------
   // Superadmin Actions
   // ----------------------------------------------------
-  const handleSuperAddLkp = (e: React.FormEvent) => {
+  const handleSuperAddLembaga = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!superNewLkpName || !superNewLkpEmail || !superNewLkpPass) {
+    if (!superNewLembagaName || !superNewLembagaEmail || !superNewLembagaPass) {
       alert('Semua data Lembaga Kursus baru wajib diisi!');
       return;
     }
 
-    if (superNewLkpPass.length < 6) {
+    if (superNewLembagaPass.length < 6) {
       alert('Sandi minimal 6 karakter!');
       return;
     }
 
-    if (superNewLkpPass !== superNewLkpConfirm) {
+    if (superNewLembagaPass !== superNewLembagaConfirm) {
       alert('Konfirmasi sandi tidak sesuai!');
       return;
     }
 
-    const newLkp: Institution = {
-      id: 'lkp_' + Date.now(),
-      name: superNewLkpName,
-      email: superNewLkpEmail,
-      password: superNewLkpPass,
-      activeUntil: superNewLkpDuration,
+    const newLembaga: Institution = {
+      id: 'lembaga_' + Date.now(),
+      name: superNewLembagaName,
+      email: superNewLembagaEmail,
+      password: superNewLembagaPass,
+      activeUntil: superNewLembagaDuration,
       profile: {
         address: 'Alamat Baru',
         phone: '08123',
-        email: superNewLkpEmail,
+        email: superNewLembagaEmail,
         vision: 'Mewujudkan profesionalisme unggul.',
         mission: '1. Memberikan pengajaran teori dan praktek seimbang.'
       },
@@ -1099,14 +1102,14 @@ export default function App() {
       raportCards: []
     };
 
-    setInstitutions([...institutions, newLkp]);
-    alert(`Berhasil menambahkan Lembaga Kursus "${superNewLkpName}" ke sistem!`);
+    setInstitutions([...institutions, newLembaga]);
+    alert(`Berhasil menambahkan Lembaga Kursus "${superNewLembagaName}" ke sistem!`);
     
     // Reset inputs
-    setSuperNewLkpName('');
-    setSuperNewLkpEmail('');
-    setSuperNewLkpPass('');
-    setSuperNewLkpConfirm('');
+    setSuperNewLembagaName('');
+    setSuperNewLembagaEmail('');
+    setSuperNewLembagaPass('');
+    setSuperNewLembagaConfirm('');
   };
 
   const deleteInstitution = (id: string, name: string) => {
@@ -1130,10 +1133,10 @@ export default function App() {
   // ----------------------------------------------------
   // Individual Institution (Tenant) Actions & Calculations
   // ----------------------------------------------------
-  const currentLkp = institutions.find(inst => inst.id === currentUser?.id);
+  const currentLembaga = institutions.find(inst => inst.id === currentUser?.id);
 
-  const updateCurrentLkp = (updatedLkp: Institution) => {
-    setInstitutions(institutions.map(inst => inst.id === updatedLkp.id ? updatedLkp : inst));
+  const updateCurrentLembaga = (updatedLembaga: Institution) => {
+    setInstitutions(institutions.map(inst => inst.id === updatedLembaga.id ? updatedLembaga : inst));
   };
 
   const handlePublicRegisterStudent = (lembagaId: string, newStudent: Student) => {
@@ -1149,41 +1152,41 @@ export default function App() {
   };
 
   const handleAddNewStudent = (newStudent: Student) => {
-    if (!currentLkp) return;
-    updateCurrentLkp({
-      ...currentLkp,
-      students: [...currentLkp.students, newStudent]
+    if (!currentLembaga) return;
+    updateCurrentLembaga({
+      ...currentLembaga,
+      students: [...currentLembaga.students, newStudent]
     });
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
-    if (!currentLkp) return;
-    updateCurrentLkp({
-      ...currentLkp,
-      students: currentLkp.students.map(s => s.id === updatedStudent.id ? updatedStudent : s)
+    if (!currentLembaga) return;
+    updateCurrentLembaga({
+      ...currentLembaga,
+      students: currentLembaga.students.map(s => s.id === updatedStudent.id ? updatedStudent : s)
     });
   };
 
   const handleAddRaportCard = (newRaport: RaportCard) => {
-    if (!currentLkp) return;
+    if (!currentLembaga) return;
     // Remove if duplicate existing
-    const filtered = currentLkp.raportCards.filter(
+    const filtered = currentLembaga.raportCards.filter(
       r => !(r.studentId === newRaport.studentId && r.period === newRaport.period)
     );
-    updateCurrentLkp({
-      ...currentLkp,
+    updateCurrentLembaga({
+      ...currentLembaga,
       raportCards: [...filtered, newRaport]
     });
   };
 
   const handleRemoveRaportCard = (id: string) => {
-    if (!currentLkp) return;
-    const reportItem = currentLkp.raportCards.find(r => r.id === id);
-    const studentName = currentLkp.students ? (currentLkp.students.find(s => s.id === reportItem?.studentId)?.name || 'Siswa') : 'Siswa';
+    if (!currentLembaga) return;
+    const reportItem = currentLembaga.raportCards.find(r => r.id === id);
+    const studentName = currentLembaga.students ? (currentLembaga.students.find(s => s.id === reportItem?.studentId)?.name || 'Siswa') : 'Siswa';
     if (confirm(`Yakin ingin menghapus Lembar Raport milik "${studentName}" (${reportItem?.period || 'Periode'})? Tindakan ini tidak dapat dibatalkan.`)) {
-      updateCurrentLkp({
-        ...currentLkp,
-        raportCards: currentLkp.raportCards.filter(r => r.id !== id)
+      updateCurrentLembaga({
+        ...currentLembaga,
+        raportCards: currentLembaga.raportCards.filter(r => r.id !== id)
       });
     }
   };
@@ -1216,9 +1219,9 @@ export default function App() {
     if (currentUser.role === 'superadmin') return 'Pengawas Lembaga Kursus';
     if (currentUser.staffName) return currentUser.staffName;
     if (currentUser.subRole === 'pimpinan') return 'Pimpinan Lembaga Kursus';
-    // Fallback lookup from currentLkp
-    if (currentLkp && currentLkp.staffCredentials) {
-      const staff = currentLkp.staffCredentials.find(s => s.role === currentUser.subRole);
+    // Fallback lookup from currentLembaga
+    if (currentLembaga && currentLembaga.staffCredentials) {
+      const staff = currentLembaga.staffCredentials.find(s => s.role === currentUser.subRole);
       if (staff) return staff.name;
     }
     return 'Staf Lembaga Kursus';
@@ -1387,7 +1390,7 @@ export default function App() {
     <div className="min-h-screen bg-[#fafafa] selection:bg-emerald-500 selection:text-white flex flex-col justify-between">
       
       {/* 1. Header (Navbar) - Hidden when entering a specific public institution landing page */}
-      {!(selectedPublicLkpId && !currentUser) && (
+      {!(selectedPublicLembagaId && !currentUser) && (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 py-1.5 sm:py-2.5 px-3 sm:px-5 flex flex-col md:flex-row md:items-center justify-between gap-y-2 md:gap-y-0 no-print shadow-xs animate-fade-in">
           {/* Row 1: Logo & Title (left), and interactive back/login controls (right on mobile) */}
           <div className="flex items-center justify-between w-full md:w-auto gap-2 sm:gap-3 min-w-0 mr-0 md:mr-4">
@@ -1404,15 +1407,15 @@ export default function App() {
                     </h1>
                     <span className="hidden md:inline-block text-[9px] uppercase font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold border border-emerald-100/50">Superadmin</span>
                   </div>
-                ) : currentLkp ? (
+                ) : currentLembaga ? (
                   <div className="flex flex-col min-w-0">
                     <h1 className="font-black text-[11px] sm:text-xs md:text-sm tracking-tight text-neutral-900 font-display uppercase truncate max-w-[120px] xs:max-w-[200px] sm:max-w-md">
-                      {currentLkp.name}
+                      {currentLembaga.name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] sm:text-[10px] md:text-xs text-neutral-500 font-medium mt-0.5">
-                      <span className="flex items-center gap-1 truncate max-w-[100px] xs:max-w-[180px] sm:max-w-none">📍 {currentLkp.profile.address}</span>
+                      <span className="flex items-center gap-1 truncate max-w-[100px] xs:max-w-[180px] sm:max-w-none">📍 {currentLembaga.profile.address}</span>
                       <span className="text-neutral-300 hidden sm:inline">•</span>
-                      <span className="flex items-center gap-1 font-mono hidden sm:inline">📞 {currentLkp.profile.phone}</span>
+                      <span className="flex items-center gap-1 font-mono hidden sm:inline">📞 {currentLembaga.profile.phone}</span>
                     </div>
                   </div>
                 ) : null
@@ -1427,9 +1430,9 @@ export default function App() {
             {/* "Masuk" button ONLY shown here in the first row on mobile when not logged in */}
             {!currentUser && (
               <div className="flex md:hidden items-center gap-1.5 matches-first-row">
-                {selectedPublicLkpId && (
+                {selectedPublicLembagaId && (
                   <button
-                    onClick={() => setSelectedPublicLkpId(null)}
+                    onClick={() => setSelectedPublicLembagaId(null)}
                     className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-extrabold text-xs px-2.5 py-1.5 rounded-xl transition-all cursor-pointer border border-neutral-205 shadow-3xs"
                   >
                     <span>←</span>
@@ -1501,9 +1504,9 @@ export default function App() {
               <div className="flex flex-col md:flex-row items-stretch md:items-center gap-1.5 sm:gap-2 w-full md:w-auto">
                 {/* On Desktop: Show full "Masuk" and back home controls (hidden on Mobile since it shifted to row 1) */}
                 <div className="hidden md:flex items-center gap-1.5 sm:gap-2">
-                  {selectedPublicLkpId && (
+                  {selectedPublicLembagaId && (
                     <button
-                      onClick={() => setSelectedPublicLkpId(null)}
+                      onClick={() => setSelectedPublicLembagaId(null)}
                       className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-extrabold text-xs px-2.5 py-1.5 rounded-xl transition-all cursor-pointer border border-neutral-200 shadow-3xs flex items-center gap-1"
                     >
                       <span>←</span>
@@ -1548,18 +1551,18 @@ export default function App() {
         
         {/* VIEW: UNAUTHENTICATED (MINIMALIST LANDING PAGE WITH POPUPS) */}
         {!currentUser && (
-          selectedPublicLkpId ? (() => {
-            const publicLkp = institutions.find(i => i.id === selectedPublicLkpId);
-            if (!publicLkp) {
-              setSelectedPublicLkpId(null);
+          selectedPublicLembagaId ? (() => {
+            const publicLembaga = institutions.find(i => i.id === selectedPublicLembagaId);
+            if (!publicLembaga) {
+              setSelectedPublicLembagaId(null);
               return null;
             }
             return (
               <div className="max-w-5xl mx-auto w-full animate-fade-in">
                 <PublicLandingPage
-                  lembaga={publicLkp}
-                  onBack={() => setSelectedPublicLkpId(null)}
-                  onRegisterStudent={(student) => handlePublicRegisterStudent(publicLkp.id, student)}
+                  lembaga={publicLembaga}
+                  onBack={() => setSelectedPublicLembagaId(null)}
+                  onRegisterStudent={(student) => handlePublicRegisterStudent(publicLembaga.id, student)}
                 />
               </div>
             );
@@ -1771,7 +1774,7 @@ export default function App() {
                                     </span>
                                     <button
                                       onClick={() => {
-                                        setSelectedPublicLkpId(inst.id);
+                                        setSelectedPublicLembagaId(inst.id);
                                         window.scrollTo({ top: 0, behavior: 'smooth' });
                                       }}
                                       className="bg-neutral-950 hover:bg-emerald-600 active:scale-98 text-white font-black text-[9px] px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shadow-3xs flex items-center justify-center gap-0.5 shrink-0 animate-pulse-subtle"
@@ -1870,7 +1873,7 @@ export default function App() {
                             setForgotEmail('');
                             setForgotVerificationAnswer('');
                             setForgotStep(1);
-                            setForgotMatchedLkp(null);
+                            setForgotMatchedLembaga(null);
                             setForgotNewPass('');
                             setForgotNewPassConfirm('');
                             setForgotError('');
@@ -2032,7 +2035,7 @@ export default function App() {
                         </div>
                         
                         <div>
-                          <span className="text-[10px] font-bold text-neutral-600 block mb-1">Pilih Bidang Utama LKP</span>
+                          <span className="text-[10px] font-bold text-neutral-600 block mb-1">Pilih Bidang Utama Lembaga</span>
                           <select
                             value={regSkillField}
                             onChange={(e) => setRegSkillField(e.target.value)}
@@ -2071,42 +2074,61 @@ export default function App() {
                             className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer h-3.5 w-3.5"
                           />
                           <label htmlFor="regEnableAI" className="text-[11px] text-neutral-600 cursor-pointer leading-tight select-none">
-                            <strong>Gunakan Agen AI untuk Merancang LKP</strong> (Otomatis membuat visi, misi, 3 program kurikulum awal, fasilitas, dan instruktur sesuai bidang keahlian)
+                            <strong>Gunakan Agen AI untuk Merancang Lembaga</strong> (Otomatis membuat visi, misi, 3 program kurikulum awal, fasilitas, dan instruktur sesuai bidang keahlian)
                           </label>
                         </div>
                       </div>
 
-                      {/* DISCLAIMER & PENAFIAN TANGGUNG JAWAB */}
+                      {/* DISCLAIMER & PENAFIAN TANGGUNG JAWAB LINK */}
                       <div className="bg-red-50/50 p-3.5 rounded-xl border border-red-100 text-left space-y-2">
-                        <div className="flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4 text-red-600" />
-                          <span className="text-[11px] font-extrabold text-red-800 uppercase tracking-wider">Disclaimer & Penafian Tanggung Jawab</span>
+                        <div className="flex items-start gap-2.5">
+                          <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                          <div className="flex-1 space-y-1">
+                            <span className="text-[11px] font-extrabold text-red-800 uppercase tracking-wider block">PENAFIAN & BATASAN TANGGUNG JAWAB</span>
+                            <p className="text-[10px] text-neutral-600 leading-normal font-semibold">
+                              Anda wajib membaca dan menyetujui dokumen Disclaimer & Ketentuan sebelum mendaftar.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => setShowDisclaimerPopup(true)}
+                              className="text-[11px] font-black text-red-700 underline hover:text-red-800 flex items-center gap-1 mt-1 cursor-pointer transition-colors"
+                            >
+                              📖 BACA & SETUJUI KETENTUAN LENGKAP
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-red-750 leading-relaxed font-semibold">
-                          Pembuat aplikasi tidak bertanggung jawab atas kehilangan data apa pun dan tidak dapat dituntut secara hukum. Aplikasi ini disediakan "sebagaimana adanya" tanpa jaminan dalam bentuk apa pun.
-                        </p>
-                        <div className="flex items-start gap-2 pt-1">
+
+                        <div className="flex items-start gap-2 pt-1.5 border-t border-red-100/60">
                           <input
                             type="checkbox"
                             id="regAgreeDisclaimer"
                             required
                             checked={regAgreeDisclaimer}
-                            onChange={(e) => setRegAgreeDisclaimer(e.target.checked)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setShowDisclaimerPopup(true);
+                              } else {
+                                setRegAgreeDisclaimer(false);
+                              }
+                            }}
                             className="mt-0.5 rounded text-red-600 focus:ring-red-500 cursor-pointer h-3.5 w-3.5"
                           />
-                          <label htmlFor="regAgreeDisclaimer" className="text-[11px] text-red-850 cursor-pointer leading-tight select-none font-extrabold">
-                            Saya mengerti, menyetujui, dan bersedia menanggung risiko kehilangan data secara mandiri.
+                          <label 
+                            htmlFor="regAgreeDisclaimer" 
+                            className="text-[10px] text-red-900 cursor-pointer leading-tight select-none font-bold"
+                          >
+                            Saya menyetujui seluruh isi dokumen Disclaimer dan penafian tanggung jawab hukum.
                           </label>
                         </div>
                       </div>
 
                       <button
                         type="submit"
-                        disabled={regIsGenerating}
-                        className={`w-full text-white font-bold text-xs py-3 rounded-xl transition-all shadow-md cursor-pointer mt-2 flex items-center justify-center gap-2 ${
-                          regIsGenerating 
-                            ? 'bg-neutral-400 cursor-not-allowed' 
-                            : 'bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg'
+                        disabled={regIsGenerating || !regAgreeDisclaimer}
+                        className={`w-full font-bold text-xs py-3 rounded-xl transition-all shadow-md mt-2 flex items-center justify-center gap-2 ${
+                          (regIsGenerating || !regAgreeDisclaimer)
+                            ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none' 
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg cursor-pointer'
                         }`}
                       >
                         {regIsGenerating ? (
@@ -2120,6 +2142,105 @@ export default function App() {
                       </button>
                     </form>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* 2.5 DISCLAIMER FULL POPUP MODAL */}
+            {showDisclaimerPopup && (
+              <div className="fixed inset-0 z-[60] flex justify-center items-center overflow-y-auto p-4 bg-neutral-950/70 backdrop-blur-md animate-fade-in text-left">
+                {/* Backdrop clicks */}
+                <div className="absolute inset-0" onClick={() => setShowDisclaimerPopup(false)} />
+
+                <div className="relative bg-white rounded-3xl border border-red-100 shadow-2xl w-full max-w-lg overflow-hidden z-10 transition-all p-6 md:p-8 space-y-4 my-auto">
+                  {/* Modal Header */}
+                  <div className="flex items-start justify-between border-b border-neutral-100 pb-3">
+                    <div className="flex gap-3">
+                      <div className="p-2.5 bg-red-50 text-red-600 rounded-2xl shrink-0 mt-0.5">
+                        <ShieldAlert className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-neutral-900 text-sm md:text-base uppercase tracking-tight">Dokumen Penafian & Batasan Tanggung Jawab</h4>
+                        <p className="text-[10px] text-red-800 uppercase font-mono tracking-wider font-bold">Harap Baca & Setujui Sebelum Melanjutkan</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setRegAgreeDisclaimer(false);
+                        setShowDisclaimerPopup(false);
+                      }}
+                      className="p-1.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 rounded-lg transition-colors cursor-pointer shrink-0"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Disclaimer Body Content */}
+                  <div className="bg-neutral-50/70 p-4 rounded-2xl border border-neutral-150 h-72 overflow-y-auto text-xs text-neutral-700 leading-relaxed space-y-4 font-sans scrollbar-thin scrollbar-thumb-neutral-200">
+                    <p className="text-neutral-500 text-[11px] italic font-medium">
+                      Pernyataan ini adalah syarat mutlak penggunaan seluruh fitur Sistem Administrasi & Manajemen Akademik Lembaga Kursus dan Pelatihan. Dengan mendaftarkan lembaga Anda, Anda sepenuhnya terikat oleh ketentuan hukum berikut ini:
+                    </p>
+
+                    <div className="space-y-1.5">
+                      <h5 className="font-bold text-neutral-900 text-xs">1. KETIADAAN JAMINAN LAYANAN (AS IS)</h5>
+                      <p className="text-[11px]">
+                        Aplikasi ini dikembangkan dan disediakan secara "Sebagaimana Adanya" (<em>As Is</em>) serta "Sebagaimana Tersedia" (<em>As Available</em>). Pengembang tidak memberikan jaminan apa pun atas kelancaran koneksi, ketiadaan eror, ketahanan server, maupun kepastian ketersediaan platform di masa mendatang secara terus-menerus.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h5 className="font-bold text-neutral-900 text-xs text-red-700">2. PELEPASAN TANGGUNG JAWAB ATAS KEHILANGAN DATA</h5>
+                      <p className="text-[11px] text-red-900 font-medium">
+                        Pembuat aplikasi, pengembang utama, maupun tim penyedia infrastruktur server <strong>SAMA SEKALI TIDAK BERTANGGUNG JAWAB</strong> atas hilangnya data administrasi Lembaga, data keuangan, data kurikulum/kelas, riwayat pembayaran, data personil/instruktur, maupun data sensitif pendaftaran siswa baru yang disebabkan oleh kesalahan sistem, pembersihan berkala, gangguan server, atau alasan teknis apa pun.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h5 className="font-bold text-neutral-900 text-xs">3. PEMBEBASAN MUTLAK DARI TUNTUTAN HUKUM</h5>
+                      <p className="text-[11px]">
+                        Pengguna (Lembaga Kursus yang mendaftar) setuju untuk <strong>membebaskan secara mutlak</strong> pembuat aplikasi dari segala jenis tuntutan hukum, gugatan ganti rugi perdata, laporan pidana, maupun tuntutan materiil/immateriil dalam yurisdiksi hukum mana pun, baik sekarang maupun di masa mendatang. Anda memikul seluruh risiko penggunaan secara mandiri.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h5 className="font-bold text-neutral-900 text-xs">4. KEWAJIBAN PENCADANGAN (BACKUP) SECARA MANDIRI</h5>
+                      <p className="text-[11px]">
+                        Pihak pengelola Lembaga/Kursus memikul kewajiban dan tanggung jawab penuh untuk mencetak, mengekspor (mengunduh berkas laporan dalam format PDF/Base64 jika tersedia), atau menyalin seluruh data operasional ke media penyimpanan fisik lokal atau layanan cloud cadangan pribadi Anda sendiri secara berkala.
+                      </p>
+                    </div>
+
+
+                  </div>
+
+                  {/* Warning Footer Text */}
+                  <p className="text-[10px] text-neutral-500 leading-relaxed font-medium">
+                    *Dengan menekan tombol setuju di bawah ini, Anda menyatakan telah membaca, memahami secara sadar tanpa paksaan, dan menerima semua konsekuensi hukum yang tercantum.
+                  </p>
+
+                  {/* Modal Footer Buttons */}
+                  <div className="flex items-center gap-3 pt-2 border-t border-neutral-100 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegAgreeDisclaimer(false);
+                        setShowDisclaimerPopup(false);
+                      }}
+                      className="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Batal & Tolak
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegAgreeDisclaimer(true);
+                        setShowDisclaimerPopup(false);
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                    >
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      <span>Saya Setuju & Terima Risiko</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -2210,8 +2331,8 @@ export default function App() {
                     <form onSubmit={handleForgotResetConfirm} className="space-y-4">
                       <div className="bg-neutral-50 rounded-2xl p-3 border border-neutral-100 space-y-1">
                         <p className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 leading-none">Lembaga Terdeteksi:</p>
-                        <p className="text-xs font-extrabold text-neutral-800">{forgotMatchedLkp?.name}</p>
-                        <p className="text-[10px] font-mono text-neutral-400 italic">({forgotMatchedLkp?.email})</p>
+                        <p className="text-xs font-extrabold text-neutral-800">{forgotMatchedLembaga?.name}</p>
+                        <p className="text-[10px] font-mono text-neutral-400 italic">({forgotMatchedLembaga?.email})</p>
                       </div>
 
                       <p className="text-xs text-neutral-500 leading-relaxed font-semibold">
@@ -2304,7 +2425,7 @@ export default function App() {
                         <h3 className="text-base font-black text-neutral-900 tracking-tight">Pengaturan Profil Saya</h3>
                         <p className="text-[10px] text-neutral-450 uppercase font-bold tracking-wider">
                           {currentUser?.role === 'superadmin' ? 'Superadmin' : (
-                            currentUser?.subRole === 'pimpinan' ? 'Pimpinan LKP' : 'Akses Staff'
+                            currentUser?.subRole === 'pimpinan' ? 'Pimpinan Lembaga' : 'Akses Staff'
                           )}
                         </p>
                       </div>
@@ -2702,7 +2823,7 @@ export default function App() {
                           : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100'
                       }`}
                     >
-                      <span>Semua LKP</span>
+                      <span>Semua Lembaga</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
                         superadminStatusFilter === 'all' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
                       }`}>
@@ -2718,7 +2839,7 @@ export default function App() {
                           : 'bg-emerald-50/50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50'
                       }`}
                     >
-                      <span>LKP Aktif</span>
+                      <span>Lembaga Aktif</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
                         superadminStatusFilter === 'active' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
                       }`}>
@@ -2754,10 +2875,10 @@ export default function App() {
                         <p className="text-sm font-bold text-neutral-800">Tidak ada lembaga kursus yang cocok</p>
                         <p className="text-xs text-neutral-400">
                           {superadminSearchQuery && superadminStatusFilter !== 'all'
-                            ? `Pencarian "${superadminSearchQuery}" dengan filter status "${superadminStatusFilter === 'active' ? 'LKP Aktif' : 'Masa Habis'}" tidak membuahkan hasil.`
+                            ? `Pencarian "${superadminSearchQuery}" dengan filter status "${superadminStatusFilter === 'active' ? 'Lembaga Aktif' : 'Masa Habis'}" tidak membuahkan hasil.`
                             : superadminSearchQuery
                             ? `Pencarian untuk "${superadminSearchQuery}" tidak ditemukan.`
-                            : `Tidak ada lembaga dengan status "${superadminStatusFilter === 'active' ? 'LKP Aktif' : 'Masa Habis'}" saat ini.`}
+                            : `Tidak ada lembaga dengan status "${superadminStatusFilter === 'active' ? 'Lembaga Aktif' : 'Masa Habis'}" saat ini.`}
                         </p>
                       </div>
                       <button
@@ -2828,11 +2949,11 @@ export default function App() {
         )}
 
         {/* VIEW: LOGGED IN ROLE -> INSTITUTION / LEMBAGA WORKSPACE */}
-        {currentUser && currentUser.role === 'lembaga' && currentLkp && (
+        {currentUser && currentUser.role === 'lembaga' && currentLembaga && (
           <div className="space-y-6" id="lembaga-workspace">
             
             {/* Expiration Banner Warning */}
-            {isLembagaExpired(currentLkp) && (
+            {isLembagaExpired(currentLembaga) && (
               <div className="p-4 bg-red-50 text-red-800 border-l-4 border-red-600 rounded-r-2xl text-xs space-y-1 shadow-sm">
                 <p className="font-bold flex items-center gap-1 text-sm">
                   <ShieldAlert className="w-4.5 h-4.5 text-red-700 animate-bounce" />
@@ -3118,12 +3239,12 @@ export default function App() {
               <div className={`${isSidebarCollapsed ? 'lg:col-span-11 xl:col-span-11' : 'lg:col-span-9'} w-full transition-all duration-300`}>
 
             {/* Expired block for all non-essential actions */}
-            {isLembagaExpired(currentLkp) && activeSidebar !== 'dashboard' ? (
+            {isLembagaExpired(currentLembaga) && activeSidebar !== 'dashboard' ? (
               <div className="bg-white p-12 text-center border border-neutral-100 rounded-3xl space-y-4">
                 <Lock className="w-12 h-12 text-red-400 mx-auto" />
                 <h3 className="font-bold text-lg text-neutral-800">Modul Kerja Terkunci</h3>
                 <p className="text-xs text-neutral-500 max-w-md mx-auto">
-                  Aplikasi tata kelola kursus {currentLkp.name} ditangguhkan sementara karena melampaui tenggat pemakaian yang diizinkan superadmin. Silakan lakukan perpanjangan lisensi.
+                  Aplikasi tata kelola kursus {currentLembaga.name} ditangguhkan sementara karena melampaui tenggat pemakaian yang diizinkan superadmin. Silakan lakukan perpanjangan lisensi.
                 </p>
               </div>
             ) : (
@@ -3137,7 +3258,7 @@ export default function App() {
 
                     {/* Warm Reminder / Expiry warning inside admin dashboard */}
                     {(() => {
-                      const daysRemaining = getDaysRemaining(currentLkp.activeUntil);
+                      const daysRemaining = getDaysRemaining(currentLembaga.activeUntil);
                       const isApproaching = daysRemaining <= 14;
                       const isExpired = daysRemaining < 0;
                       if (!isApproaching && !isExpired) return null;
@@ -3164,12 +3285,12 @@ export default function App() {
                               <p className="text-xs leading-relaxed text-neutral-700 font-medium">
                                 {isExpired ? (
                                   <span>
-                                    Masa berlaku operasional sistem Anda telah <strong>berakhir pada tanggal ({currentLkp.activeUntil})</strong>.
+                                    Masa berlaku operasional sistem Anda telah <strong>berakhir pada tanggal ({currentLembaga.activeUntil})</strong>.
                                     Harap segera hubungi pembuat/pengembang aplikasi untuk memperpanjang lisensi Anda agar seluruh modul sistem dan asisten guru AI dapat terus digunakan tanpa kendala.
                                   </span>
                                 ) : (
                                   <span>
-                                    Masa berlaku operasional sistem Lembaga Kursus Anda tersisa <strong className="text-amber-800">{daysRemaining} hari</strong> lagi (aktif s/d <strong>{currentLkp.activeUntil}</strong>).
+                                    Masa berlaku operasional sistem Lembaga Kursus Anda tersisa <strong className="text-amber-800">{daysRemaining} hari</strong> lagi (aktif s/d <strong>{currentLembaga.activeUntil}</strong>).
                                     Silakan segera hubungi pembuat/pengembang aplikasi untuk memperpanjang masa pakai sistem agar proses tata kelola instansi tetap berjalan lancar.
                                   </span>
                                 )}
@@ -3184,7 +3305,7 @@ export default function App() {
                                   <span>💬 Hubungi Pembuat Aplikasi (WhatsApp)</span>
                                 </a>
                                 <span className="text-neutral-300 hidden sm:inline">|</span>
-                                <span className="text-neutral-500">Masa Aktif s/d: <strong className="text-neutral-800">{currentLkp.activeUntil}</strong></span>
+                                <span className="text-neutral-500">Masa Aktif s/d: <strong className="text-neutral-800">{currentLembaga.activeUntil}</strong></span>
                               </div>
                             </div>
                           </div>
@@ -3199,9 +3320,9 @@ export default function App() {
                         <div>
                           <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-bold">Siswa Aktif</p>
                           <p className="text-2xl font-black text-neutral-800 mt-1">
-                            {currentLkp.students.filter(s => s.status === 'Aktif').length}
+                            {currentLembaga.students.filter(s => s.status === 'Aktif').length}
                           </p>
-                          <p className="text-[10px] text-neutral-450 mt-1">Dari total {currentLkp.students.length} terdaftar</p>
+                          <p className="text-[10px] text-neutral-450 mt-1">Dari total {currentLembaga.students.length} terdaftar</p>
                         </div>
                         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                           <Users className="w-5 h-5 text-blue-600" />
@@ -3212,7 +3333,7 @@ export default function App() {
                         <div>
                           <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-bold">Program Kursus</p>
                           <p className="text-2xl font-black text-neutral-800 mt-1">
-                            {currentLkp.programs.length} Kelas
+                            {currentLembaga.programs.length} Kelas
                           </p>
                           <p className="text-[10px] text-neutral-450 mt-1">Siap dipasarkan Lembaga Kursus</p>
                         </div>
@@ -3226,8 +3347,8 @@ export default function App() {
                           <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-bold">Buku Kas Jurnal</p>
                           <p className="text-2xl font-black text-neutral-800 mt-1">
                             Rp {(
-                              currentLkp.journal.filter(j => j.type === 'Debit').reduce((s,t) => s+t.amount, 0) -
-                              currentLkp.journal.filter(j => j.type === 'Kredit').reduce((s,t) => s+t.amount, 0)
+                              currentLembaga.journal.filter(j => j.type === 'Debit').reduce((s,t) => s+t.amount, 0) -
+                              currentLembaga.journal.filter(j => j.type === 'Kredit').reduce((s,t) => s+t.amount, 0)
                             ).toLocaleString('id-ID')}
                           </p>
                           <p className="text-[10px] text-emerald-600 font-bold mt-1">Sisa saldo kas lancar</p>
@@ -3241,7 +3362,7 @@ export default function App() {
                         <div>
                           <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-bold">8 SNP Akreditasi</p>
                           <p className="text-2xl font-black text-neutral-800 mt-1">
-                            {Math.round(currentLkp.snpStandards.reduce((acc, curr) => acc + curr.percentage, 0) / currentLkp.snpStandards.length)}%
+                            {Math.round(currentLembaga.snpStandards.reduce((acc, curr) => acc + curr.percentage, 0) / currentLembaga.snpStandards.length)}%
                           </p>
                           <p className="text-[10px] text-neutral-450 mt-1">Persentase kecukupan bukti</p>
                         </div>
@@ -3270,7 +3391,7 @@ export default function App() {
                         {/* Chart implementation */}
                         <div className="py-2.5">
                           <div className="h-[180px] w-full flex items-end justify-between gap-6 px-4 border-b border-neutral-200">
-                            {currentLkp.journal.slice(-6).map((j, i) => {
+                            {currentLembaga.journal.slice(-6).map((j, i) => {
                               const proportion = Math.min(Math.round((j.amount / 4000000) * 100), 100);
                               return (
                                 <div key={j.id} className="flex-1 flex flex-col items-center group relative cursor-help">
@@ -3308,7 +3429,7 @@ export default function App() {
                           <Layers className="w-6 h-6 text-emerald-400 mb-3" />
                           <h4 className="font-extrabold text-sm tracking-tight text-white uppercase font-display">Visi Lembaga Kursus</h4>
                           <p className="text-xs text-neutral-300 italic leading-relaxed mt-2.5">
-                            "{currentLkp.profile.vision}"
+                            "{currentLembaga.profile.vision}"
                           </p>
                         </div>
                         <div className="border-t border-neutral-800 pt-3 mt-4 text-[10px] text-neutral-400 flex items-center justify-between">
@@ -3328,7 +3449,7 @@ export default function App() {
                           <Calendar className="w-4 h-4 text-neutral-400" />
                         </div>
                         <div className="space-y-3">
-                          {currentLkp.calendar.slice(0, 3).map(ev => (
+                          {currentLembaga.calendar.slice(0, 3).map(ev => (
                             <div key={ev.id} className="flex justify-between items-center text-xs p-2.5 rounded-xl hover:bg-neutral-50">
                               <span className="font-semibold text-neutral-800">{ev.title}</span>
                               <span className="text-neutral-400 font-mono">{ev.date}</span>
@@ -3344,7 +3465,7 @@ export default function App() {
                           <HelpCircle className="w-4 h-4 text-neutral-400" />
                         </div>
                         <div className="space-y-4">
-                          {currentLkp.programs.map(p => (
+                          {currentLembaga.programs.map(p => (
                             <div key={p.id} className="pb-3 border-b border-neutral-50 space-y-1.5 last:border-b-0 last:pb-0">
                               <div className="flex justify-between items-center">
                                 <span className="font-bold text-neutral-900 text-xs uppercase tracking-tight">{p.name} ({p.duration})</span>
@@ -3378,8 +3499,8 @@ export default function App() {
                 {activeSidebar === 'registrasi' && (
                   isModuleLocked('registrasi', '') ? renderLockedScreen('registrasi', '') : (
                     <PendaftaranSiswa
-                      lembaga={currentLkp}
-                      students={currentLkp.students}
+                      lembaga={currentLembaga}
+                      students={currentLembaga.students}
                       onAddStudent={handleAddNewStudent}
                       onUpdateStudent={handleUpdateStudent}
                       onNavigateToRaport={(id) => {
@@ -3394,9 +3515,9 @@ export default function App() {
                 {activeSidebar === 'administrasi' && (
                   isModuleLocked('administrasi', activeModule) ? renderLockedScreen('administrasi', activeModule) : (
                     <AdminModules
-                      lembaga={currentLkp}
-                      students={currentLkp.students}
-                      onUpdateLembaga={updateCurrentLkp}
+                      lembaga={currentLembaga}
+                      students={currentLembaga.students}
+                      onUpdateLembaga={updateCurrentLembaga}
                       activeModule={activeModule}
                       setActiveModule={setActiveModule}
                     />
@@ -3407,8 +3528,8 @@ export default function App() {
                 {activeSidebar === 'asisten_ai' && (
                   isModuleLocked('asisten_ai', '') ? renderLockedScreen('asisten_ai', '') : (
                     <AIAssistance
-                      lembaga={currentLkp}
-                      students={currentLkp.students}
+                      lembaga={currentLembaga}
+                      students={currentLembaga.students}
                       onAddRaportCard={handleAddRaportCard}
                       activeTab={activeAITab}
                       setActiveTab={setActiveAITab}
@@ -3420,8 +3541,8 @@ export default function App() {
                 {activeSidebar === 'raport' && (
                   isModuleLocked('raport', '') ? renderLockedScreen('raport', '') : (
                     <RaportPrint
-                      lembaga={currentLkp}
-                      students={currentLkp.students}
+                      lembaga={currentLembaga}
+                      students={currentLembaga.students}
                       onAddRaportCard={handleAddRaportCard}
                       onRemoveRaportCard={handleRemoveRaportCard}
                       preselectedStudentId={navigationStudentId}
@@ -3439,17 +3560,17 @@ export default function App() {
         )}
 
         {/* POPUP NOTIFIKASI JELANG EXPIRED / MASA AKTIF LISENSI */}
-        {currentUser && currentUser.role === 'lembaga' && currentLkp && (() => {
-          const daysRemaining = getDaysRemaining(currentLkp.activeUntil);
+        {currentUser && currentUser.role === 'lembaga' && currentLembaga && (() => {
+          const daysRemaining = getDaysRemaining(currentLembaga.activeUntil);
           const isExpired = daysRemaining < 0;
           const isExpiringSoon = daysRemaining >= 0 && daysRemaining <= 14;
-          const shouldShowPopup = (isExpired || isExpiringSoon) && dismissedLicenseWarningLkpId !== currentLkp.id;
+          const shouldShowPopup = (isExpired || isExpiringSoon) && dismissedLicenseWarningLembagaId !== currentLembaga.id;
 
           if (!shouldShowPopup) return null;
 
           return (
             <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 bg-neutral-950/65 backdrop-blur-md animate-fade-in text-left">
-              <div className="absolute inset-0 min-h-screen" onClick={() => setDismissedLicenseWarningLkpId(currentLkp.id)} />
+              <div className="absolute inset-0 min-h-screen" onClick={() => setDismissedLicenseWarningLembagaId(currentLembaga.id)} />
               
               <div className="relative bg-white rounded-3xl border border-neutral-100 shadow-2xl w-full max-w-md overflow-hidden z-20 p-6 md:p-8 space-y-5 my-auto">
                 
@@ -3471,17 +3592,17 @@ export default function App() {
                 {/* Content */}
                 <div className="space-y-3 text-xs leading-relaxed text-neutral-600">
                   <p>
-                    Yth. Pengelola <strong>{currentLkp.name}</strong>,
+                    Yth. Pengelola <strong>{currentLembaga.name}</strong>,
                   </p>
                   {isExpired ? (
                     <p className="bg-red-50 text-red-800 p-3.5 rounded-2xl border border-red-100 font-medium">
-                      Masa berlaku lisensi operasional sistem Anda telah <strong>berakhir ({currentLkp.activeUntil})</strong>. 
+                      Masa berlaku lisensi operasional sistem Anda telah <strong>berakhir ({currentLembaga.activeUntil})</strong>. 
                       Beberapa fitur administratif dan kecerdasan buatan dinonaktifkan sementara.
                     </p>
                   ) : (
                     <p className="bg-amber-50 text-amber-800 p-3.5 rounded-2xl border border-amber-100 font-medium">
                       Masa berlaku lisensi operasional sistem Anda tersisa <strong>{daysRemaining} hari</strong> lagi, 
-                      dan akan berakhir pada tanggal <strong>{currentLkp.activeUntil}</strong>.
+                      dan akan berakhir pada tanggal <strong>{currentLembaga.activeUntil}</strong>.
                     </p>
                   )}
                   <p>
@@ -3492,7 +3613,7 @@ export default function App() {
                 {/* Action buttons */}
                 <div className="flex justify-end pt-2">
                   <button
-                    onClick={() => setDismissedLicenseWarningLkpId(currentLkp.id)}
+                    onClick={() => setDismissedLicenseWarningLembagaId(currentLembaga.id)}
                     className={`font-semibold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition-colors ${
                       isExpired 
                         ? 'bg-neutral-950 hover:bg-neutral-900 text-white' 
@@ -3509,6 +3630,284 @@ export default function App() {
         })()}
 
       </main>
+
+      {/* TOMBOL MENGAMBANG PANDUAN PENGGUNAAN */}
+      <div className="fixed bottom-6 right-6 z-40 no-print">
+        <button
+          type="button"
+          onClick={() => {
+            setGuideActiveTab('peran');
+            setShowUserGuidePopup(true);
+          }}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs md:text-sm py-3 px-4 md:py-3.5 md:px-5 rounded-full shadow-2xl hover:shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+        >
+          <HelpCircle className="w-4 h-4 md:w-5 md:h-5 animate-bounce group-hover:animate-none" />
+          <span>Panduan Penggunaan</span>
+        </button>
+      </div>
+
+      {/* POPUP MODAL PANDUAN PENGGUNAAN */}
+      {showUserGuidePopup && (
+        <div className="fixed inset-0 z-[100] flex justify-center items-center overflow-y-auto p-4 bg-neutral-950/75 backdrop-blur-md animate-fade-in text-left">
+          {/* Backdrop click */}
+          <div className="absolute inset-0" onClick={() => setShowUserGuidePopup(false)} />
+
+          <div className="relative bg-white rounded-3xl border border-neutral-100 shadow-2xl w-full max-w-3xl overflow-hidden z-10 transition-all p-6 md:p-8 flex flex-col max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-neutral-100 pb-4 shrink-0">
+              <div className="flex gap-3">
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shrink-0">
+                  <HelpCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-neutral-950 text-base md:text-lg tracking-tight uppercase">
+                    Panduan Penggunaan Aplikasi
+                  </h3>
+                  <p className="text-[10px] md:text-xs text-indigo-800 uppercase font-mono tracking-wider font-bold">
+                    Sistem Tata Kelola Administrasi & Manajemen Akademik Digital
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowUserGuidePopup(false)}
+                className="p-2 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 rounded-xl transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tab Navigation (Sistematis & Responsif) */}
+            <div className="flex gap-1 border-b border-neutral-100 py-2.5 overflow-x-auto shrink-0 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setGuideActiveTab('peran')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  guideActiveTab === 'peran'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                🔑 1. Pendaftaran & Login
+              </button>
+              <button
+                type="button"
+                onClick={() => setGuideActiveTab('akademik')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  guideActiveTab === 'akademik'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                🧭 2. Mengenal Menu & AI
+              </button>
+              <button
+                type="button"
+                onClick={() => setGuideActiveTab('snp')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  guideActiveTab === 'snp'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                📊 3. Akreditasi 8 SNP
+              </button>
+              <button
+                type="button"
+                onClick={() => setGuideActiveTab('keuangan')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  guideActiveTab === 'keuangan'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                💰 4. Keuangan & Kas
+              </button>
+            </div>
+
+            {/* Tab Content (Scrollable) */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin scrollbar-thumb-neutral-200">
+              
+              {/* TAB 1: PENDAFTARAN & LOGIN */}
+              {guideActiveTab === 'peran' && (
+                <div className="space-y-4 animate-fade-in text-neutral-700 text-xs leading-relaxed">
+                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                    <h4 className="font-extrabold text-emerald-950 text-sm mb-1 uppercase tracking-tight">Langkah Mulai: Registrasi & Masuk ke Aplikasi</h4>
+                    <p className="text-[11px] text-neutral-600">
+                      Ikuti petunjuk di bawah ini untuk mendaftarkan Lembaga Kursus baru Anda dan masuk ke sistem dashboard administrasi secara aman.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-emerald-800">1. Klik Registrasi Lembaga Baru</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Pada halaman awal (Beranda/Direktori), temukan tombol berwarna hitam di pojok kanan atas bertuliskan <strong>"Registrasi Lembaga Baru"</strong> (dengan ikon centang hijau). Klik tombol tersebut untuk membuka formulir.
+                      </p>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-emerald-800">2. Isi Formulir Registrasi</h5>
+                      <ul className="list-disc pl-5 space-y-1.5 text-[11px] text-neutral-650">
+                        <li><strong>Nama Lembaga Kursus:</strong> Ketik nama lengkap lembaga Anda (contoh: <em>LKP Cerdas Mulia</em>).</li>
+                        <li><strong>Email Penanggungjawab:</strong> Ketik alamat email aktif Anda. Email ini akan digunakan untuk login.</li>
+                        <li><strong>Kata Sandi & Konfirmasi:</strong> Masukkan kata sandi rahasia Anda (minimal 6 karakter) di kedua kolom yang tersedia. Klik ikon mata untuk melihat karakter.</li>
+                        <li><strong>Pilih Bidang Utama Lembaga:</strong> Pilih bidang keterampilan kursus Anda (seperti <em>Tata Busana, Otomotif, Tata Rias Kecantikan, Teknologi Informasi, Seni Kuliner, Bahasa Asing, atau Lainnya</em>).</li>
+                        <li><strong>Agen AI Perancang Lembaga:</strong> Biarkan checkbox ini tetap tercentang. Asisten AI akan otomatis membuat visi, misi, 3 program kelas, inventaris awal, serta data instruktur secara instan sehingga aplikasi Anda langsung terisi data simulasi yang rapi.</li>
+                      </ul>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2 bg-red-50/30 border-red-100">
+                      <h5 className="font-extrabold text-red-950 text-xs uppercase">3. Setujui Ketentuan & Selesaikan</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Klik tautan merah <strong>"📖 BACA & SETUJUI KETENTUAN LENGKAP"</strong>. Setelah membaca jendela ketentuan penafian data, klik tanda silang atau scroll, lalu klik/centang kotak kecil di bawahnya: <em>"Saya menyetujui seluruh isi dokumen Disclaimer..."</em>. Terakhir, klik tombol hijau <strong>"Selesaikan Registrasi Baru"</strong> di bagian paling bawah.
+                      </p>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-emerald-800">4. Masuk (Login) ke Dashboard</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Setelah pendaftaran sukses, klik tombol hijau <strong>"Buka Form Login"</strong> di dalam pesan sukses, atau klik tombol hijau <strong>"Masuk Sistem"</strong> di pojok kanan atas layar monitor Anda. Masukkan <strong>Email</strong> dan <strong>Kata Sandi</strong> Anda, lalu klik tombol hijau <strong>"Masuk Sistem"</strong> di bagian bawah form login.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: MENGENAL MENU & AI */}
+              {guideActiveTab === 'akademik' && (
+                <div className="space-y-4 animate-fade-in text-neutral-700 text-xs leading-relaxed">
+                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                    <h4 className="font-extrabold text-emerald-950 text-sm mb-1 uppercase tracking-tight">Navigasi Menu Samping & Layanan Asisten AI</h4>
+                    <p className="text-[11px] text-neutral-600">
+                      Setelah berhasil login, di sisi kiri layar monitor Anda akan muncul menu samping (sidebar). Gunakan menu ini untuk mengakses seluruh fitur tata kelola akademik.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="border border-neutral-150 p-3.5 rounded-2xl">
+                      <h5 className="font-bold text-neutral-900 text-xs mb-1">🧭 Daftar Menu Samping Utama:</h5>
+                      <ul className="list-disc pl-5 space-y-1.5 text-[11px] text-neutral-650">
+                        <li><strong>Dashboard Ringkasan:</strong> Statistik jumlah siswa, nilai rata-rata kepatuhan 8 SNP, serta ringkasan kas buku utama dalam bentuk grafik.</li>
+                        <li><strong>Pendaftaran Siswa:</strong> Tempat admin menginput langsung data siswa baru yang mendaftar ke kelas kursus.</li>
+                        <li><strong>Profil & Kelembagaan (Akordeon):</strong> Berisi pengaturan profil, visi misi, bagan struktur organisasi, serta daftar sarana prasarana.</li>
+                        <li><strong>Akademik & KBM (Akordeon):</strong> Berisi modul program kelas, kalender akademik, jadwal instruktur, absensi harian siswa, dan pencetakan Raport Digital.</li>
+                        <li><strong>Keuangan & Promosi (Akordeon):</strong> Berisi penyusunan Anggaran (RAB), pencatatan Buku Kas Jurnal Harian, serta pembuatan kupon voucher diskon.</li>
+                        <li><strong>Pemenuhan 8 SNP:</strong> Modul khusus kelayakan akreditasi nasional.</li>
+                      </ul>
+                    </div>
+
+                    <div className="border border-purple-100 p-3.5 bg-purple-50/20 rounded-2xl">
+                      <h5 className="font-bold text-purple-950 text-xs mb-1 flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-purple-700" />
+                        <span>⚡ Memanfaatkan Asisten AI (Gemini):</span>
+                      </h5>
+                      <p className="text-[11px] text-neutral-650 mb-2">
+                        Sistem ini dilengkapi kecerdasan buatan Gemini API di sisi server untuk membantu produktivitas operasional lembaga Anda:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1 text-[11px] text-neutral-600">
+                        <li><strong>Merancang RPP Otomatis:</strong> Masuk ke menu <em>Akademik & KBM → RPP, LKS, Uji</em>. Masukkan nama materi ajar Anda, lalu minta asisten AI merumuskan silabus lengkap, rencana pelaksanaan pembelajaran, bahan ajar, serta pertanyaan latihan secara instan.</li>
+                        <li><strong>Pembuatan SK Legalitas:</strong> Pada menu profil atau struktur organisasi, Anda dapat menggunakan asisten AI untuk memformulasikan draf lengkap Surat Keputusan (SK) resmi formal yang siap dicetak di kertas A4.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: AKREDITASI 8 STANDAR NASIONAL PENDIDIKAN (SNP) */}
+              {guideActiveTab === 'snp' && (
+                <div className="space-y-4 animate-fade-in text-neutral-700 text-xs leading-relaxed">
+                  <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-150">
+                    <h4 className="font-extrabold text-amber-950 text-sm mb-1 uppercase tracking-tight">Klarifikasi & Cara Pemenuhan Kelayakan 8 SNP</h4>
+                    <p className="text-[11px] text-neutral-600">
+                      Lembaga Anda diukur berdasarkan 8 Standar Nasional Pendidikan (SNP) untuk persiapan akreditasi. Sistem ini menyediakan dua cara kerja yang fleksibel dan transparan.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-amber-850">Mengapa Checkbox Penilaian Terkunci Secara Default?</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Saat pertama kali membuka menu <strong>"Pemenuhan 8 SNP"</strong>, Anda akan melihat semua kotak centang (checkbox) berwarna abu-abu dan tidak bisa diklik secara manual. Hal ini dikarenakan sistem berada dalam mode **Sinkronisasi Data Aplikasi (Otomatis)**. Sistem secara cerdas membaca database riil Anda untuk menentukan kelulusan indikator.
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1 text-[10px] text-neutral-500 font-mono">
+                        <li>Indikator Guru akan otomatis tercentang jika Anda mendaftarkan nama instruktur di menu "Jadwal & Pengajar".</li>
+                        <li>Indikator Pembiayaan akan otomatis tercentang jika Anda merekam minimal satu kas di menu "Jurnal Keuangan".</li>
+                        <li>Indikator Kurikulum akan otomatis tercentang jika program paket kelas terisi di menu "Program & Harga".</li>
+                      </ul>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-amber-850">Bagaimana Cara Mengisi Secara Manual?</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Jika Anda ingin mengabaikan sistem penilaian otomatis dan ingin mencentang sendiri kelayakan standar secara bebas:
+                      </p>
+                      <ol className="list-decimal pl-5 space-y-1.5 text-[11px] text-neutral-650">
+                        <li>Masuk ke menu <strong>"Pemenuhan 8 SNP"</strong> di menu samping.</li>
+                        <li>Di bagian atas layar monitor, temukan tombol bertuliskan <strong>"Input Checklist Manual"</strong> (dengan ikon pensil). Klik tombol tersebut.</li>
+                        <li>Setelah diklik, mode beralih ke checklist manual. Seluruh kotak checkbox kini **bisa Anda klik/centang secara bebas** sesuai kondisi lembaga Anda.</li>
+                        <li>Tuliskan nama dokumen bukti fisik pendukung pada kolom yang disediakan (contoh: <em>SK_Lembaga_2026.pdf</em>) untuk menyimpan catatan akreditasi.</li>
+                        <li>Jika ingin kembali ke penilaian otomatis aplikasi, cukup klik tombol <strong>"Sinkronisasi Data Aplikasi"</strong> di bagian atas.</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: KEUANGAN & BUKU KAS */}
+              {guideActiveTab === 'keuangan' && (
+                <div className="space-y-4 animate-fade-in text-neutral-700 text-xs leading-relaxed">
+                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-150">
+                    <h4 className="font-extrabold text-emerald-950 text-sm mb-1 uppercase tracking-tight">Akuntansi Sederhana: Debit-Kredit Kas Buku Terpilah</h4>
+                    <p className="text-[11px] text-neutral-600">
+                      Pantau pemasukan dan pengeluaran operasional sekolah Anda melalui modul keuangan tanpa perlu keahlian akuntansi yang rumit.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-neutral-900 text-xs uppercase text-emerald-800">1. Membuka Jurnal Keuangan</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Klik menu kelompok <strong>"Keuangan & Promosi"</strong> lalu pilih submenu <strong>"Jurnal Keuangan"</strong>. Layar monitor Anda akan menampilkan ringkasan visual total saldo kas bersih saat ini, grafik perkembangan laba rugi, serta tabel mutasi kas.
+                      </p>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-emerald-750 text-xs uppercase">2. Mencatat Kas Masuk (Debit)</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Klik tombol hijau <strong>"+ Tambah Kas Masuk"</strong>. Jendela popup baru akan muncul. Isikan tanggal transaksi, pilih kategori pemasukan (Penerimaan SPP, Biaya Pendaftaran, Bantuan Pemerintah, dll), masukkan keterangan tambahan, ketik jumlah uangnya (Rupiah), lalu klik tombol hijau <strong>"Simpan Transaksi Kas"</strong>.
+                      </p>
+                    </div>
+
+                    <div className="border border-neutral-150 p-4 rounded-2xl space-y-2">
+                      <h5 className="font-extrabold text-red-750 text-xs uppercase">3. Mencatat Kas Keluar (Kredit)</h5>
+                      <p className="text-[11px] text-neutral-650">
+                        Klik tombol merah <strong>"+ Tambah Kas Keluar"</strong>. Masukkan tanggal transaksi, pilih kategori pengeluaran (Gaji Guru/Honor, Pembelian Inventaris, Alat Tulis Kantor, Konsumsi, Listrik/Sewa Gedung, dll), tulis deskripsi pengeluaran, masukkan jumlah uangnya, lalu klik tombol merah <strong>"Simpan Transaksi Kas"</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-4 border-t border-neutral-100 shrink-0">
+              <span className="text-[10px] text-neutral-400 font-medium">
+                Pencet tombol "Keluar" di header kanan atas jika Anda ingin mengamankan session akun setelah selesai digunakan.
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowUserGuidePopup(false)}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
+              >
+                Tutup Panduan
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* 3. Footer */}
       <footer className="bg-white border-t border-neutral-100 py-6 px-6 text-center text-xs text-neutral-400 no-print mt-12 shadow-3xs">
