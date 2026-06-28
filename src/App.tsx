@@ -165,6 +165,9 @@ export default function App() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
+  const [regPasswordHint, setRegPasswordHint] = useState('');
+  const [regSecurityQuestion, setRegSecurityQuestion] = useState('Apa nama kota kelahiran Anda?');
+  const [regSecurityAnswer, setRegSecurityAnswer] = useState('');
   const [showRegPass, setShowRegPass] = useState(false);
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
@@ -209,12 +212,23 @@ export default function App() {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotVerificationAnswer, setForgotVerificationAnswer] = useState(''); // NPSN or Lembaga Name
-  const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1: Verify Account, 2: Reset/View Pass
+  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1); // 1: Verify Account, 2: OTP Entry, 3: Reset Pass
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotOtpInput, setForgotOtpInput] = useState('');
   const [forgotMatchedLembaga, setForgotMatchedLembaga] = useState<Institution | null>(null);
   const [forgotNewPass, setForgotNewPass] = useState('');
   const [forgotNewPassConfirm, setForgotNewPassConfirm] = useState('');
   const [forgotError, setForgotError] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotRecipientEmail, setForgotRecipientEmail] = useState('');
+  const [forgotSecurityAnswerInput, setForgotSecurityAnswerInput] = useState('');
+  const [forgotShowHint, setForgotShowHint] = useState(false);
+  const [showSmtpConfig, setShowSmtpConfig] = useState(false);
+  const [customSmtp, setCustomSmtp] = useState(() => {
+    const saved = localStorage.getItem('custom_smtp_config');
+    return saved ? JSON.parse(saved) : { host: '', port: '587', user: '', pass: '', from: '' };
+  });
 
   // States for Editing Own Profile & Password
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -223,9 +237,18 @@ export default function App() {
   const [profileOldPassword, setProfileOldPassword] = useState('');
   const [profilePassword, setProfilePassword] = useState('');
   const [profileConfirmPassword, setProfileConfirmPassword] = useState('');
+  const [profilePasswordHint, setProfilePasswordHint] = useState('');
+  const [profileSecurityQuestion, setProfileSecurityQuestion] = useState('Apa nama kota kelahiran Anda?');
+  const [profileSecurityAnswer, setProfileSecurityAnswer] = useState('');
   const [profileShowOldPass, setProfileShowOldPass] = useState(false);
   const [profileShowNewPass, setProfileShowNewPass] = useState(false);
   const [profileShowConfirmPass, setProfileShowConfirmPass] = useState(false);
+
+  // States for Custom Delete Confirmation Modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmType, setDeleteConfirmType] = useState<'institution' | 'raport'>('institution');
+  const [deleteConfirmTargetId, setDeleteConfirmTargetId] = useState('');
+  const [deleteConfirmTargetName, setDeleteConfirmTargetName] = useState('');
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
 
@@ -236,9 +259,15 @@ export default function App() {
       if (currentUser.role === 'superadmin') {
         setProfileName('Superadmin');
         setProfileEmail(currentUser.staffUsername || 'superadmin');
+        setProfilePasswordHint('');
+        setProfileSecurityQuestion('Apa nama kota kelahiran Anda?');
+        setProfileSecurityAnswer('');
       } else if (currentUser.subRole === 'pimpinan' && activeLembaga) {
         setProfileName(activeLembaga.name);
         setProfileEmail(activeLembaga.email);
+        setProfilePasswordHint(activeLembaga.passwordHint || '');
+        setProfileSecurityQuestion(activeLembaga.securityQuestion || 'Apa nama kota kelahiran Anda?');
+        setProfileSecurityAnswer(activeLembaga.securityAnswer || '');
       } else if (activeLembaga) {
         const staff = activeLembaga.staffCredentials?.find(
           s => s.role === currentUser.subRole && s.username.toLowerCase() === currentUser.staffUsername?.toLowerCase()
@@ -250,6 +279,9 @@ export default function App() {
           setProfileName(currentUser.staffName || '');
           setProfileEmail(currentUser.staffUsername || '');
         }
+        setProfilePasswordHint('');
+        setProfileSecurityQuestion('Apa nama kota kelahiran Anda?');
+        setProfileSecurityAnswer('');
       }
       setProfileOldPassword('');
       setProfilePassword('');
@@ -261,6 +293,18 @@ export default function App() {
       setProfileSuccess('');
     }
   }, [showProfileModal, currentUser, institutions]);
+
+  // Clean up forgot password modal state on open/close
+  useEffect(() => {
+    if (!showForgotModal) {
+      setForgotSecurityAnswerInput('');
+      setForgotShowHint(false);
+      setForgotMatchedLembaga(null);
+      setForgotStep(1);
+      setForgotError('');
+      setForgotSuccess('');
+    }
+  }, [showForgotModal]);
 
   const handleSaveProfileChanges = (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,6 +401,9 @@ export default function App() {
         ...activeLembaga,
         name: profileName,
         email: emailLower,
+        passwordHint: profilePasswordHint.trim() || undefined,
+        securityQuestion: profileSecurityQuestion.trim() || undefined,
+        securityAnswer: profileSecurityAnswer.trim().toLowerCase() || undefined,
       };
       if (profilePassword) {
         updatedLembaga.password = profilePassword;
@@ -878,6 +925,9 @@ export default function App() {
       name: regName,
       email: regEmail,
       password: regPassword,
+      passwordHint: regPasswordHint.trim() || undefined,
+      securityQuestion: regSecurityQuestion.trim() || undefined,
+      securityAnswer: regSecurityAnswer.trim().toLowerCase() || undefined,
       activeUntil: expiryStr,
       profile: {
         address: 'Jl. Pemuda No. 45, Sleman, Yogyakarta',
@@ -940,9 +990,11 @@ export default function App() {
     setRegPassword('');
     setRegConfirm('');
     setRegSkillCustom('');
+    setRegPasswordHint('');
+    setRegSecurityAnswer('');
   };
 
-  // Handle Forgot Password - Step 1: Verify Email
+  // Handle Forgot Password - Step 1: Verify Email & Find Account
   const handleForgotVerifyEmail = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
@@ -950,12 +1002,14 @@ export default function App() {
 
     const email = forgotEmail.trim().toLowerCase();
     if (!email) {
-      setForgotError('⚠️ Masukkan alamat email lembaga terlebih dahulu!');
+      setForgotError('⚠️ Masukkan alamat email atau username terlebih dahulu!');
       return;
     }
 
+    let matched: Institution | null = null;
+    
     if (email === 'superadmin') {
-      setForgotMatchedLembaga({
+      matched = {
         id: 'superadmin',
         name: 'Superadmin Pengawas',
         email: 'superadmin',
@@ -975,22 +1029,121 @@ export default function App() {
         snpStandards: [],
         students: [],
         raportCards: []
-      });
-      setForgotStep(2);
-      return;
+      };
+    } else {
+      matched = institutions.find(inst => inst.email.toLowerCase() === email) || null;
     }
 
-    const matched = institutions.find(inst => inst.email.toLowerCase() === email);
     if (!matched) {
       setForgotError('⚠️ Alamat email lembaga tidak terdaftar di sistem SaaS Lembaga Kursus ini! Silakan hubungi pengawas atau daftar baru.');
       return;
     }
 
     setForgotMatchedLembaga(matched);
-    setForgotStep(2);
+    // Prefill recipient. If it's the default dummy or custom, they can adjust it to their real email inbox
+    setForgotRecipientEmail(matched.email === 'superadmin' ? '' : matched.email);
   };
 
-  // Handle Forgot Password - Step 2: Verification Challenge & Password Recovery
+  // Handle Forgot Password - Verify Security Question
+  const handleVerifySecurityQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    if (!forgotMatchedLembaga) return;
+
+    // Handle superadmin recovery special case or default
+    const savedAnswer = (forgotMatchedLembaga.securityAnswer || '').trim().toLowerCase();
+    const userInput = forgotSecurityAnswerInput.trim().toLowerCase();
+
+    if (forgotMatchedLembaga.id === 'superadmin') {
+      setForgotError('⚠️ Akun superadmin tidak menggunakan pertanyaan keamanan. Kata sandi tetap: superadmin123');
+      return;
+    }
+
+    if (!savedAnswer) {
+      setForgotError('⚠️ Akun ini belum mengatur pertanyaan keamanan. Silakan gunakan opsi Kirim OTP atau hubungi pengawas.');
+      return;
+    }
+
+    if (!userInput) {
+      setForgotError('⚠️ Harap masukkan jawaban keamanan Anda!');
+      return;
+    }
+
+    if (userInput === savedAnswer) {
+      setForgotSuccess('✅ Jawaban Keamanan Benar! Silakan masukkan kata sandi baru Anda.');
+      setForgotStep(3);
+    } else {
+      setForgotError('⚠️ Jawaban Keamanan salah! Silakan coba lagi atau gunakan Petunjuk Kata Sandi.');
+    }
+  };
+
+  // Trigger the real sending of OTP email
+  const handleSendOtpEmail = async () => {
+    if (!forgotMatchedLembaga) return;
+    setForgotError('');
+    setForgotSuccess('');
+    setForgotLoading(true);
+
+    const recipient = forgotRecipientEmail.trim();
+    if (!recipient || !recipient.includes('@')) {
+      setForgotError('⚠️ Masukkan alamat email penerima yang valid!');
+      setForgotLoading(false);
+      return;
+    }
+
+    // Generate random 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setForgotOtp(generatedOtp);
+    setForgotOtpInput('');
+
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: recipient,
+          otp: generatedOtp,
+          institutionName: forgotMatchedLembaga.name,
+          customSmtp: (customSmtp.host && customSmtp.user && customSmtp.pass) ? customSmtp : null
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setForgotSuccess(`📧 Sukses! Kode OTP nyata telah dikirim ke email: ${recipient}`);
+        console.log(`%c[PEMULIHAN SANDI] Kode OTP 6-Digit untuk ${forgotMatchedLembaga.name}: ${generatedOtp}`, "color: #4f46e5; font-weight: bold; font-size: 14px;");
+        setForgotStep(2);
+      } else if (data.error === 'SMTP_NOT_CONFIGURED') {
+        setForgotError('SMTP_NOT_CONFIGURED');
+      } else {
+        setForgotError(`⚠️ Gagal mengirim email: ${data.message || 'Kesalahan SMTP'}`);
+      }
+    } catch (err: any) {
+      setForgotError(`⚠️ Hubungan server terputus atau gagal: ${err.message || err}`);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Handle Forgot Password - Step 2: Verify 6-digit OTP
+  const handleForgotVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotSuccess('');
+
+    if (forgotOtpInput.trim() !== forgotOtp) {
+      setForgotError('⚠️ Kode OTP yang Anda masukkan salah! Silakan periksa kembali kode Anda.');
+      return;
+    }
+
+    // OTP matches! Go to Step 3 (Reset Password)
+    setForgotStep(3);
+  };
+
+  // Handle Forgot Password - Step 3: Password Reset Confirmation
   const handleForgotResetConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
@@ -998,54 +1151,37 @@ export default function App() {
 
     if (!forgotMatchedLembaga) return;
 
-    // Challenge check using registered Phone, NPSN, or Name
-    const chalAnswer = forgotVerificationAnswer.trim().replace(/[-\s()]/g, '');
-    const checkAnswerRaw = forgotVerificationAnswer.trim().toLowerCase();
-    const officialPhone = (forgotMatchedLembaga.profile?.phone || '').replace(/[-\s()]/g, '');
-    const officialNpsn = (forgotMatchedLembaga.profile?.npsn || '').toLowerCase().trim();
-    const officialName = (forgotMatchedLembaga.name || '').toLowerCase().trim();
-
-    const matchesPhone = officialPhone && (chalAnswer === officialPhone || checkAnswerRaw === officialPhone);
-    const matchesNpsn = officialNpsn && checkAnswerRaw === officialNpsn;
-    const matchesName = checkAnswerRaw === officialName;
-
-    if (!matchesPhone && !matchesNpsn && !matchesName) {
-      setForgotError('⚠️ Verifikasi Gagal! Nomor Telepon, NPSN, atau Nama Lembaga yang Anda masukkan tidak cocok.');
+    if (!forgotNewPass) {
+      setForgotError('⚠️ Masukkan kata sandi baru Anda!');
       return;
     }
 
-    // If they want to write a new password
-    if (forgotNewPass) {
-      if (forgotNewPass.length < 6) {
-        setForgotError('⚠️ Kata sandi baru minimal harus terdiri dari 6 karakter!');
-        return;
-      }
-      if (forgotNewPass !== forgotNewPassConfirm) {
-        setForgotError('⚠️ Konfirmasi kata sandi baru tidak sesuai!');
-        return;
-      }
-
-      if (forgotMatchedLembaga.id === 'superadmin') {
-        alert('ℹ️ Akun Pengawas (superadmin) dilindungi dan tidak dapat diganti kata sandinya di sandbox ini. Kata sandi tetap: superadmin123');
-        setShowForgotModal(false);
-        return;
-      }
-
-      const updated = institutions.map(inst => {
-        if (inst.id === forgotMatchedLembaga.id) {
-          return { ...inst, password: forgotNewPass };
-        }
-        return inst;
-      });
-
-      setInstitutions(updated);
-      alert(`🎉 Kata sandi untuk Lembaga Kursus "${forgotMatchedLembaga.name}" berhasil disetel ulang! Silakan masuk menggunakan kata sandi baru Anda.`);
-      setShowForgotModal(false);
-    } else {
-      // Just expose current password and state it clearly
-      setForgotSuccess(`Sandi Anda ditemukan! Kata sandi saat ini: "${forgotMatchedLembaga.password}"`);
-      alert(`🔑 Verifikasi Berhasil!\n\nKata sandi Lembaga Kursus "${forgotMatchedLembaga.name}" saat ini adalah:\n👉 "${forgotMatchedLembaga.password}" 👈\n\nAnda dapat menggunakannya sekarang atau mengisi formulir di bawah ini untuk menyetel ulang ke kata sandi baru.`);
+    if (forgotNewPass.length < 6) {
+      setForgotError('⚠️ Kata sandi baru minimal harus terdiri dari 6 karakter!');
+      return;
     }
+
+    if (forgotNewPass !== forgotNewPassConfirm) {
+      setForgotError('⚠️ Konfirmasi kata sandi baru tidak sesuai!');
+      return;
+    }
+
+    if (forgotMatchedLembaga.id === 'superadmin') {
+      alert('ℹ️ Akun Pengawas (superadmin) dilindungi dan tidak dapat diganti kata sandinya di sandbox ini. Kata sandi tetap: superadmin123');
+      setShowForgotModal(false);
+      return;
+    }
+
+    const updated = institutions.map(inst => {
+      if (inst.id === forgotMatchedLembaga.id) {
+        return { ...inst, password: forgotNewPass };
+      }
+      return inst;
+    });
+
+    setInstitutions(updated);
+    alert(`🎉 Kata sandi untuk Lembaga Kursus "${forgotMatchedLembaga.name}" berhasil disetel ulang! Silakan masuk menggunakan kata sandi baru Anda.`);
+    setShowForgotModal(false);
   };
 
   const handleLogout = () => {
@@ -1113,9 +1249,24 @@ export default function App() {
   };
 
   const deleteInstitution = (id: string, name: string) => {
-    if (confirm(`Yakin ingin MENGHAPUS Lembaga Kursus "${name}" secara permanen? Tindakan ini tidak dapat dikembalikan!`)) {
-      setInstitutions(institutions.filter(inst => inst.id !== id));
+    setDeleteConfirmType('institution');
+    setDeleteConfirmTargetId(id);
+    setDeleteConfirmTargetName(name);
+    setShowDeleteConfirm(true);
+  };
+
+  const executeDeleteConfirm = () => {
+    if (deleteConfirmType === 'institution') {
+      setInstitutions(institutions.filter(inst => inst.id !== deleteConfirmTargetId));
+    } else if (deleteConfirmType === 'raport' && currentLembaga) {
+      updateCurrentLembaga({
+        ...currentLembaga,
+        raportCards: currentLembaga.raportCards.filter(r => r.id !== deleteConfirmTargetId)
+      });
     }
+    setShowDeleteConfirm(false);
+    setDeleteConfirmTargetId('');
+    setDeleteConfirmTargetName('');
   };
 
   const adjustActiveUntilDate = (id: string, newDate: string) => {
@@ -1183,12 +1334,11 @@ export default function App() {
     if (!currentLembaga) return;
     const reportItem = currentLembaga.raportCards.find(r => r.id === id);
     const studentName = currentLembaga.students ? (currentLembaga.students.find(s => s.id === reportItem?.studentId)?.name || 'Siswa') : 'Siswa';
-    if (confirm(`Yakin ingin menghapus Lembar Raport milik "${studentName}" (${reportItem?.period || 'Periode'})? Tindakan ini tidak dapat dibatalkan.`)) {
-      updateCurrentLembaga({
-        ...currentLembaga,
-        raportCards: currentLembaga.raportCards.filter(r => r.id !== id)
-      });
-    }
+    const periodLabel = reportItem?.period || 'Periode';
+    setDeleteConfirmType('raport');
+    setDeleteConfirmTargetId(id);
+    setDeleteConfirmTargetName(`Lembar Raport milik "${studentName}" (${periodLabel})`);
+    setShowDeleteConfirm(true);
   };
 
   // Expiration checking logic
@@ -1873,6 +2023,8 @@ export default function App() {
                             setForgotEmail('');
                             setForgotVerificationAnswer('');
                             setForgotStep(1);
+                            setForgotOtp('');
+                            setForgotOtpInput('');
                             setForgotMatchedLembaga(null);
                             setForgotNewPass('');
                             setForgotNewPassConfirm('');
@@ -2024,6 +2176,29 @@ export default function App() {
                           >
                             {showRegPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
+                        </div>
+                      </div>
+
+                      {/* PASSWORD RECOVERY SETUP */}
+                      <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100/80 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <KeyRound className="w-4 h-4 text-indigo-600" />
+                          <span className="text-xs font-bold text-indigo-850">Pemulihan Akun Mandiri (Jika Lupa Sandi)</span>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] font-bold text-neutral-600 block mb-1">Petunjuk Kata Sandi / Password Hint (Wajib)</span>
+                          <input
+                            type="text"
+                            required
+                            value={regPasswordHint}
+                            onChange={(e) => setRegPasswordHint(e.target.value)}
+                            placeholder="Contoh: Nama kucing kesayangan + tahun lahir"
+                            className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-white focus:outline-indigo-600 text-neutral-700 font-medium"
+                          />
+                          <p className="text-[9px] text-neutral-400 mt-1 leading-normal italic">
+                            💡 Petunjuk ini akan langsung ditampilkan saat Anda lupa kata sandi untuk membantu Anda mengingat kembali tanpa perlu setel ulang.
+                          </p>
                         </div>
                       </div>
 
@@ -2245,6 +2420,59 @@ export default function App() {
               </div>
             )}
 
+            {/* CUSTOM DELETE CONFIRMATION MODAL */}
+            {showDeleteConfirm && (
+              <div className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-neutral-950/65 backdrop-blur-md animate-fade-in text-left">
+                {/* Backdrop closer click */}
+                <div className="absolute inset-0" onClick={() => setShowDeleteConfirm(false)} />
+
+                <div className="relative bg-white rounded-3xl border border-neutral-100 shadow-2xl w-full max-w-sm overflow-hidden z-10 transition-transform transform scale-100 p-6 space-y-4">
+                  {/* Modal Header */}
+                  <div className="flex items-center gap-3 border-b border-neutral-100 pb-3">
+                    <div className="p-2 bg-red-50 rounded-xl text-red-650">
+                      <Trash2 className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-neutral-900 text-sm">Konfirmasi Penghapusan</h4>
+                      <p className="text-[9px] text-neutral-400 uppercase font-mono tracking-wider">Tindakan Permanen</p>
+                    </div>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-neutral-600 leading-relaxed">
+                      Apakah Anda yakin ingin menghapus {deleteConfirmType === 'institution' ? 'Lembaga Kursus' : 'Lembar Raport'} berikut secara permanen?
+                    </p>
+                    <div className="bg-red-50/50 border border-red-100 rounded-2xl p-3">
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-red-600 font-bold leading-none block mb-1">Nama / Identitas:</span>
+                      <p className="text-xs font-black text-neutral-800 leading-normal">{deleteConfirmTargetName}</p>
+                    </div>
+                    <p className="text-[10px] text-red-600 italic leading-snug">
+                      ⚠️ Tindakan ini tidak dapat dikembalikan dan semua data terkait akan terhapus permanen.
+                    </p>
+                  </div>
+
+                  {/* Modal Footer / Actions */}
+                  <div className="flex gap-2.5 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="w-1/2 text-center border border-neutral-250 hover:bg-neutral-50 text-neutral-600 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={executeDeleteConfirm}
+                      className="w-1/2 text-center bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-3xs"
+                    >
+                      Ya, Hapus
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 3. FORGOT PASSWORD POPUP MODAL */}
             {showForgotModal && (
               <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 bg-neutral-950/65 backdrop-blur-md animate-fade-in text-left">
@@ -2272,10 +2500,36 @@ export default function App() {
                     </button>
                   </div>
 
-                  {forgotError && (
+                  {forgotError && forgotError !== 'SMTP_NOT_CONFIGURED' && (
                     <div className="p-3 bg-red-50 text-red-800 border border-red-200 rounded-xl text-xs font-semibold flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 shrink-0 text-red-700" />
                       <span>{forgotError}</span>
+                    </div>
+                  )}
+
+                  {forgotError === 'SMTP_NOT_CONFIGURED' && (
+                    <div className="p-4 bg-amber-50 text-amber-900 border border-amber-200 rounded-2xl text-xs space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <ShieldAlert className="w-5 h-5 shrink-0 text-amber-700 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-amber-950 text-sm leading-tight">Sistem SMTP Belum Diatur</p>
+                          <p className="text-[11px] mt-1.5 leading-relaxed text-neutral-650">
+                            Server memerlukan kredensial SMTP untuk mengirim email OTP secara nyata. Silakan isi **Pengaturan SMTP Mandiri** di bagian bawah, lalu klik kirim ulang!
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSmtpConfig(true);
+                            setForgotError(''); // clear SMTP error state
+                          }}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all cursor-pointer"
+                        >
+                          Atur SMTP Pengirim Mandiri
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -2286,107 +2540,149 @@ export default function App() {
                     </div>
                   )}
 
-                  {forgotStep === 1 ? (
+                  {forgotStep === 1 && (
                     /* Step 1: Input registered institute email/username */
-                    <form onSubmit={handleForgotVerifyEmail} className="space-y-4">
-                      <p className="text-xs text-neutral-500 leading-relaxed">
-                        Masukkan <b>Username atau Alamat Email</b> lembaga Anda yang sudah terdaftar di sistem. Kami akan mencocokkan kredensial keamanan lembaga Anda.
-                      </p>
-                      
-                      <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                          Username / Email Terdaftar
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={forgotEmail}
-                          onChange={(e) => setForgotEmail(e.target.value)}
-                          placeholder="admin@lembagaanda.com atau username"
-                          className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 transition-colors"
-                        />
-                      </div>
+                    <div className="space-y-4">
+                      {!forgotMatchedLembaga ? (
+                        <form onSubmit={handleForgotVerifyEmail} className="space-y-4">
+                          <p className="text-xs text-neutral-500 leading-relaxed">
+                            Masukkan <b>Username atau Alamat Email</b> lembaga Anda yang terdaftar. Kami akan mencocokkan akun dan mengirimkan kode OTP keamanan.
+                          </p>
+                          
+                          <div>
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                              Username / Email Terdaftar
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={forgotEmail}
+                              onChange={(e) => setForgotEmail(e.target.value)}
+                              placeholder="admin@lembagaanda.com atau username"
+                              className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 transition-colors"
+                            />
+                          </div>
 
-                      <div className="flex gap-2.5 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowForgotModal(false);
-                            setShowLoginModal(true);
-                          }}
-                          className="w-1/3 text-center border border-neutral-250 hover:bg-neutral-50 text-neutral-600 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer"
-                        >
-                          Kembali
-                        </button>
-                        <button
-                          type="submit"
-                          className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer"
-                        >
-                          Cari Akun Lembaga
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    /* Step 2: Challenge Phone, NPSN, or Name, print existing, and optionally set a new password */
-                    <form onSubmit={handleForgotResetConfirm} className="space-y-4">
+                          <div className="flex gap-2.5 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowForgotModal(false);
+                                setShowLoginModal(true);
+                              }}
+                              className="w-1/3 text-center border border-neutral-250 hover:bg-neutral-50 text-neutral-600 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer"
+                            >
+                              Kembali
+                            </button>
+                            <button
+                              type="submit"
+                              className="w-2/3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer"
+                            >
+                              Cari Akun Lembaga
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        /* Sub-step: Recovery options after finding account */
+                        <div className="space-y-4">
+                          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-3.5 space-y-1">
+                            <p className="text-[10px] font-mono uppercase tracking-wider text-indigo-500 leading-none">Akun Terdeteksi:</p>
+                            <p className="text-xs font-extrabold text-neutral-800">{forgotMatchedLembaga.name}</p>
+                            <p className="text-[9px] text-neutral-400 italic">Username/Email: {forgotEmail}</p>
+                          </div>
+
+                          <div className="border border-emerald-100 bg-emerald-50/20 p-5 rounded-2xl space-y-3.5 shadow-xs">
+                            <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
+                              <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+                              <span>Petunjuk Kata Sandi (Password Hint)</span>
+                            </div>
+                            
+                            <div className="p-4 bg-white border border-emerald-100 rounded-xl text-center">
+                              {forgotMatchedLembaga.passwordHint ? (
+                                <p className="text-xs font-bold text-neutral-800 leading-relaxed">
+                                  "{forgotMatchedLembaga.passwordHint}"
+                                </p>
+                              ) : (
+                                <p className="text-xs text-neutral-500 italic">
+                                  Akun ini belum mengatur Petunjuk Kata Sandi (Password Hint).
+                                </p>
+                              )}
+                            </div>
+
+                            <p className="text-[10px] text-emerald-700 font-medium text-center leading-relaxed">
+                              💡 Gunakan petunjuk di atas untuk membantu mengingat kata sandi Anda.
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col gap-2 pt-2 border-t border-neutral-100">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowForgotModal(false);
+                                setShowLoginModal(true);
+                              }}
+                              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm transition-all cursor-pointer text-center"
+                            >
+                              Kembali ke Halaman Login
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setForgotMatchedLembaga(null);
+                                setForgotError('');
+                                setForgotSuccess('');
+                                setForgotSecurityAnswerInput('');
+                                setForgotShowHint(false);
+                              }}
+                              className="w-full text-center border border-neutral-250 hover:bg-neutral-50 text-neutral-600 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                            >
+                              ← Cari Akun Lain / Ganti Email
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {forgotStep === 2 && (
+                    /* Step 2: Input 6-Digit OTP Code */
+                    <form onSubmit={handleForgotVerifyOtp} className="space-y-4">
                       <div className="bg-neutral-50 rounded-2xl p-3 border border-neutral-100 space-y-1">
                         <p className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 leading-none">Lembaga Terdeteksi:</p>
                         <p className="text-xs font-extrabold text-neutral-800">{forgotMatchedLembaga?.name}</p>
                         <p className="text-[10px] font-mono text-neutral-400 italic">({forgotMatchedLembaga?.email})</p>
                       </div>
 
-                      <p className="text-xs text-neutral-500 leading-relaxed font-semibold">
-                        Keamanan Lembaga: Tunjukkan kepemilikan Anda dengan mengetikkan <b>Nomor Telepon Lembaga</b> (atau NPSN/Nama Lembaga) yang terdaftar pada profil Lembaga Kursus ini.
+                      <p className="text-xs text-neutral-500 leading-relaxed text-center">
+                        Kami telah mengirimkan 6 digit kode OTP ke email Anda. Silakan masukkan kode tersebut di bawah ini untuk verifikasi.
                       </p>
 
-                      <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block mb-1">
-                          No. Telepon / NPSN / Nama Lembaga
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block mb-1 text-center">
+                          Masukkan 6 Digit Kode OTP
                         </label>
                         <input
                           type="text"
+                          maxLength={6}
                           required
-                          value={forgotVerificationAnswer}
-                          onChange={(e) => setForgotVerificationAnswer(e.target.value)}
-                          placeholder="Masukkan No. Telepon atau NPSN terdaftar"
-                          className="w-full text-xs p-3 border border-indigo-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-indigo-50/10 font-medium transition-colors"
+                          pattern="\d{6}"
+                          value={forgotOtpInput}
+                          onChange={(e) => setForgotOtpInput(e.target.value.replace(/\D/g, ''))}
+                          placeholder="••••••"
+                          className="w-full text-center text-3xl tracking-[0.5em] font-mono p-3 border-2 border-indigo-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-indigo-50/10 transition-all font-extrabold text-indigo-900"
                         />
-                      </div>
-
-                      {/* Display Reset Option if verified successfully / or general reset option built into form action */}
-                      <div className="pt-2 border-t border-neutral-100 space-y-3">
-                        <p className="text-[10px] font-bold text-neutral-450 uppercase tracking-wide">💡 Ingin Sekalian Mengganti Kata Sandi?</p>
-                        
-                        <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                            Kata Sandi Baru (Opsional, minimal 6 karakter)
-                          </label>
-                          <input
-                            type="password"
-                            value={forgotNewPass}
-                            onChange={(e) => setForgotNewPass(e.target.value)}
-                            placeholder="Isi hanya jika ingin diganti..."
-                            className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 font-mono transition-colors"
-                          />
+                        <div className="flex justify-center mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setForgotOtpInput(forgotOtp)}
+                            className="text-[11px] font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-800 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>🔑 Mode Demo: Isi Otomatis OTP ({forgotOtp})</span>
+                          </button>
                         </div>
-
-                        {forgotNewPass && (
-                          <div>
-                            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                              Konfirmasi Kata Sandi Baru
-                            </label>
-                            <input
-                              type="password"
-                              value={forgotNewPassConfirm}
-                              onChange={(e) => setForgotNewPassConfirm(e.target.value)}
-                              placeholder="Ulangi kata sandi baru"
-                              className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 font-mono transition-colors"
-                            />
-                          </div>
-                        )}
                       </div>
 
-                      <div className="flex gap-2 pt-2">
+                      <div className="flex gap-2.5 pt-2">
                         <button
                           type="button"
                           onClick={() => setForgotStep(1)}
@@ -2398,7 +2694,65 @@ export default function App() {
                           type="submit"
                           className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer"
                         >
-                          {forgotNewPass ? 'Reset & Simpan Sandi Baru' : 'Ambil Kata Sandi Saya'}
+                          Verifikasi Kode OTP
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {forgotStep === 3 && (
+                    /* Step 3: Password Reset Confirmation */
+                    <form onSubmit={handleForgotResetConfirm} className="space-y-4">
+                      <div className="bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-2xl p-3 space-y-1">
+                        <p className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 leading-none">Verifikasi Sukses:</p>
+                        <p className="text-xs font-extrabold">{forgotMatchedLembaga?.name}</p>
+                      </div>
+
+                      <p className="text-xs text-neutral-500 leading-relaxed">
+                        Identitas Anda berhasil diverifikasi! Silakan tentukan kata sandi baru untuk akun Lembaga Kursus Anda di bawah ini.
+                      </p>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                          Kata Sandi Baru (minimal 6 karakter)
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={forgotNewPass}
+                          onChange={(e) => setForgotNewPass(e.target.value)}
+                          placeholder="Masukkan kata sandi baru..."
+                          className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 font-mono transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                          Konfirmasi Kata Sandi Baru
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={forgotNewPassConfirm}
+                          onChange={(e) => setForgotNewPassConfirm(e.target.value)}
+                          placeholder="Ulangi kata sandi baru"
+                          className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-indigo-600 focus:bg-white bg-neutral-50 font-mono transition-colors"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setForgotStep(2)}
+                          className="px-4 text-center border border-neutral-250 hover:bg-neutral-50 text-neutral-600 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer"
+                        >
+                          Kembali
+                        </button>
+                        <button
+                          type="submit"
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer"
+                        >
+                          Reset & Simpan Sandi Baru
                         </button>
                       </div>
                     </form>
@@ -2542,6 +2896,29 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+
+                    {currentUser?.subRole === 'pimpinan' && (
+                      <div className="border-t border-dashed border-neutral-200 pt-3 mt-3">
+                        <h4 className="text-[10px] font-black text-neutral-450 uppercase tracking-wider mb-2.5">Pemulihan Akun Mandiri (Lupa Sandi)</h4>
+                        
+                        <div className="bg-indigo-50/40 p-3 rounded-2xl border border-indigo-100 space-y-3">
+                          <div>
+                            <span className="text-[10px] font-bold text-neutral-600 block mb-1">Petunjuk Kata Sandi (Password Hint - Wajib)</span>
+                            <input
+                              type="text"
+                              required
+                              value={profilePasswordHint}
+                              onChange={(e) => setProfilePasswordHint(e.target.value)}
+                              placeholder="Ketik hint pembantu ingatan"
+                              className="w-full text-xs p-2.5 border border-neutral-200 rounded-lg bg-white focus:outline-indigo-600 text-indigo-700 font-medium"
+                            />
+                            <p className="text-[9px] text-neutral-400 mt-1 leading-normal italic">
+                              💡 Hint ini akan langsung ditampilkan saat Anda lupa kata sandi untuk memicu ingatan Anda tanpa perlu setel ulang.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center gap-3 pt-3">
                       <button
@@ -2931,7 +3308,7 @@ export default function App() {
 
                             <button
                               onClick={() => deleteInstitution(inst.id, inst.name)}
-                              className="bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 p-2.5 rounded-xl text-red-650 flex items-center justify-center transition-colors"
+                              className="bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 p-2.5 rounded-xl text-red-650 flex items-center justify-center transition-colors self-end sm:self-center cursor-pointer"
                               title="Hapus Lembaga"
                             >
                               <Trash2 className="w-4 h-4" />

@@ -84,6 +84,9 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
     name: 'Lembaga Kursus Computer Tech',
     email: 'tech@lembaga.id',
     password: 'password123',
+    passwordHint: 'Sandi bawaan adalah password123',
+    securityQuestion: 'Apa nama kota kelahiran Anda?',
+    securityAnswer: 'bandung',
     activeUntil: '2026-12-31',
     profile: {
       address: 'Jl. Merdeka No. 45, Bandung',
@@ -195,6 +198,9 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
     name: 'Lembaga Kursus English Corner',
     email: 'english@lembaga.id',
     password: 'password123',
+    passwordHint: 'Sandi bawaan adalah password123',
+    securityQuestion: 'Apa nama kota kelahiran Anda?',
+    securityAnswer: 'yogyakarta',
     activeUntil: '2026-10-31',
     profile: {
       address: 'Jl. Sudirman No. 80, Yogyakarta',
@@ -253,6 +259,9 @@ export const DUMMY_INSTITUTIONS = (): Institution[] => [
     name: 'Lembaga Kursus Tata Busana Cantika',
     email: 'cantika@lembaga.id',
     password: 'password123',
+    passwordHint: 'Sandi bawaan adalah password123',
+    securityQuestion: 'Apa nama kota kelahiran Anda?',
+    securityAnswer: 'surabaya',
     activeUntil: '2026-09-15',
     profile: {
       address: 'Jl. Pemuda No. 12, Surabaya',

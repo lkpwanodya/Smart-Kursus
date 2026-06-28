@@ -183,6 +183,9 @@ export interface Institution {
   name: string;
   email: string; // login identifier
   password?: string;
+  passwordHint?: string;
+  securityQuestion?: string;
+  securityAnswer?: string;
   activeUntil: string; // ISO String style format, e.g. '2026-12-31'
   profile: Profile;
   structure: OrgNode[];

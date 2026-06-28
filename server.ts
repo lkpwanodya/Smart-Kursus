@@ -3,6 +3,7 @@ import path from 'path';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
+import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
@@ -11,6 +12,83 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
+
+// API route to send Real OTP Email via SMTP (Nodemailer)
+app.post('/api/auth/send-otp', async (req: Request, res: Response) => {
+  const { email, otp, institutionName, customSmtp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ error: 'Email dan OTP wajib disertakan!' });
+  }
+
+  // SMTP Settings: Prioritize system env variables, fallback to client-supplied customSmtp
+  const host = process.env.SMTP_HOST || (customSmtp && customSmtp.host);
+  const port = parseInt(process.env.SMTP_PORT || (customSmtp && customSmtp.port) || '587');
+  const user = process.env.SMTP_USER || (customSmtp && customSmtp.user);
+  const pass = process.env.SMTP_PASS || (customSmtp && customSmtp.pass);
+  const from = process.env.SMTP_FROM || (customSmtp && customSmtp.from) || `"SaaS Lembaga" <${user}>`;
+
+  if (!host || !user || !pass) {
+    return res.status(200).json({ 
+      success: false,
+      error: 'SMTP_NOT_CONFIGURED',
+      message: 'Sistem SMTP pengiriman email belum dikonfigurasi pada environment server atau pengaturan aplikasi Anda.' 
+    });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465, // true for 465, false for other ports (like 587)
+      auth: {
+        user,
+        pass,
+      },
+    });
+
+    const mailOptions = {
+      from,
+      to: email,
+      subject: `[KODE OTP KEAMANAN] Pemulihan Kata Sandi Akun - ${institutionName || 'SaaS Lembaga'}`,
+      text: `Halo,\n\nKode OTP keamanan Anda untuk memulihkan kata sandi akun adalah: ${otp}\n\nKode ini berlaku selama 10 menit. Jangan bagikan kode ini kepada siapapun.\n\nSalam,\nSistem Manajemen SaaS Lembaga`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #4f46e5; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">SaaS LKP Akreditasi</h2>
+            <p style="color: #6b7280; font-size: 12px; margin: 4px 0 0 0;">Sistem Penyelarasan Mutu & Evaluasi 8 SNP</p>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;" />
+          <p style="font-size: 14px; color: #334155; line-height: 1.5;">Halo Pengelola <strong>${institutionName || 'Lembaga'}</strong>,</p>
+          <p style="font-size: 14px; color: #334155; line-height: 1.5;">Kami menerima permintaan pengaturan ulang kata sandi untuk akun Anda. Silakan masukkan 6 digit kode OTP verifikasi berikut pada layar aplikasi:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 38px; font-weight: 800; letter-spacing: 8px; color: #4f46e5; background-color: #f5f3ff; padding: 16px 32px; border-radius: 12px; border: 2px dashed #c7d2fe; display: inline-block;">
+              ${otp}
+            </span>
+          </div>
+          
+          <p style="color: #64748b; font-size: 12px; line-height: 1.5; text-align: center; background-color: #f8fafc; padding: 12px; border-radius: 8px;">
+            ⚠️ <strong>PENTING:</strong> Kode OTP ini hanya berlaku sementara untuk pemulihan kata sandi saat ini. Mohon tidak memberitahukan kode keamanan ini kepada siapa pun untuk melindungi integritas data Anda.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;" />
+          <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 0; line-height: 1.4;">
+            Email ini dikirim secara otomatis oleh sistem SaaS Manajemen LKP.<br/>Jika Anda tidak meminta pengaturan ulang kata sandi ini, Anda dapat mengabaikan email ini dengan aman.
+          </p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    return res.json({ success: true, message: 'Email OTP berhasil dikirim!' });
+  } catch (error: any) {
+    console.error('Nodemailer SMTP Error:', error);
+    return res.status(500).json({ 
+      error: 'SMTP_SEND_FAILED',
+      message: error.message || 'Terjadi kesalahan saat menghubungi server SMTP.' 
+    });
+  }
+});
 
 // Lazy-initialize Gemini SDK to prevent crash if key is missing
 let aiClient: GoogleGenAI | null = null;
